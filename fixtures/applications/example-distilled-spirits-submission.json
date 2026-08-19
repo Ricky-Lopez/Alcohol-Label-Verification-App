@@ -1,0 +1,51 @@
+{
+  "submissionId": "submission-old-tom-001",
+  "application": {
+    "schemaVersion": "1.0",
+    "recordId": "application-old-tom-001",
+    "intakeSource": "preloaded",
+    "beverageType": "distilled_spirits",
+    "imported": false,
+    "expectedLabel": {
+      "brandName": "OLD TOM DISTILLERY",
+      "classTypeDesignation": "Kentucky Straight Bourbon Whiskey",
+      "alcoholContent": {
+        "abvPercent": 45,
+        "proof": 90,
+        "expectedDisplayText": "45% Alc./Vol. (90 Proof)"
+      },
+      "netContents": {
+        "value": 750,
+        "unit": "mL",
+        "expectedDisplayText": "750 mL"
+      },
+      "responsibleParties": [
+        {
+          "role": "distiller",
+          "name": "Example Distilling Company",
+          "address": {
+            "streetLines": [],
+            "city": "Frankfort",
+            "region": "KY",
+            "postalCode": null,
+            "countryCode": "US"
+          },
+          "statementPrefix": "Distilled and bottled by"
+        }
+      ],
+      "countryOfOrigin": null,
+      "appellationOfOrigin": null,
+      "additionalRequiredStatements": []
+    }
+  },
+  "images": [
+    {
+      "clientImageId": "image-old-tom-brand-001",
+      "fileName": "synthetic-old-tom-brand-label.png",
+      "mediaType": "image/png",
+      "sizeBytes": 2048,
+      "panelType": "brand",
+      "sha256": null
+    }
+  ]
+}

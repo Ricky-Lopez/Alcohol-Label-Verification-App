@@ -10,7 +10,7 @@ backend, health check, test configuration, and local/container deployment path.
 frontend/   React and strict TypeScript browser application
 backend/    FastAPI service and verification modules
 fixtures/   Synthetic application and label inputs (added with verification slices)
-contracts/  Generated or validated API contracts (added with the first feature contract)
+contracts/  Generated frontend-to-engine contract schema
 adr/        Architectural decision records
 docs/       Product source material and requirements
 ```
@@ -70,6 +70,22 @@ npm test
 npm run typecheck
 npm run build
 ```
+
+## Data-model contracts
+
+Backend Pydantic models are the source of truth for frontend input, OCR extraction, comparison, and
+verification-result types. After changing a boundary model, regenerate the committed JSON Schema
+and TypeScript declarations:
+
+```bash
+cd backend
+uv run python scripts/export_contract.py
+
+cd ../frontend
+npm run generate:contracts
+```
+
+See [docs/DATA_MODEL.md](docs/DATA_MODEL.md) for the model and data-flow specification.
 
 ## Container workflow
 
