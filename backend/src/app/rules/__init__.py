@@ -1,0 +1,1 @@
+"""Versioned alcohol-label rulesets."""

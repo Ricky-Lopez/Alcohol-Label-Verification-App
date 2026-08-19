@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: alcohol-label-verification-app
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: APP_ENVIRONMENT
+        value: production
+      - key: OCR_API_KEY
+        sync: false
