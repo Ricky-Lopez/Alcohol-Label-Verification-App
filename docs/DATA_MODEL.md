@@ -194,7 +194,7 @@ and current TTB labeling overviews:
 | Class/type designation | `classTypeDesignation` | Required in every application record |
 | Alcohol content | `alcoholContent.abvPercent`, optional proof and display text | Required for distilled spirits; applicability for beer/wine is ruleset-driven |
 | Net contents | Numeric `value`, controlled `unit`, optional display text | Required in every application record |
-| Bottler/producer/importer identity | One or more `responsibleParties` | Each contains role, name, address, and optional statement prefix |
+| Bottler/producer identity | One or more `responsibleParties` | Each contains name, address, and an optional statement prefix |
 | Country of origin | `countryOfOrigin` | Required when `imported` is true |
 | Wine appellation | `appellationOfOrigin` | Available for wine rules that require it |
 | Conditional disclosures | `additionalRequiredStatements` | Typed statement category, expected text, and optional rule reference |
@@ -367,7 +367,7 @@ complete regulatory rules engine. In particular:
 - distilled-spirits same-field-of-vision requirements need multi-region image evidence;
 - alcohol-content applicability differs among beverage categories and circumstances;
 - wine appellation and disclosure requirements are conditional;
-- responsible-party wording and address requirements depend on role and import status; and
+- responsible-party wording and address requirements depend on the applicable product and import status; and
 - future rules must be introduced through versioned rule and schema changes with regression tests.
 
 Reference material used to establish field coverage:

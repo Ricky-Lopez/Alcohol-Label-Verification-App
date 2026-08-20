@@ -35,6 +35,7 @@ committed. The application recognizes these variables:
 | `OPENAI_OCR_MODEL` | No | Vision model; defaults to `gpt-4o-mini` |
 | `OPENAI_IMAGE_DETAIL` | No | OpenAI image detail; defaults to `high` |
 | `OPENAI_OCR_TIMEOUT_SECONDS` | No | Per-image timeout; defaults to `4` seconds |
+| `VITE_ENABLE_OCR_MOCK_CONTROLS` | No | Set to `true` only for local mock-OCR scenario controls; it is bundled into the browser and must not contain secrets |
 
 Never place a real OpenAI API key in source files, documentation, browser bundles, Docker images,
 or Git history.
@@ -66,7 +67,18 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:5173`. Vite proxies `/health` to the API on port 8000.
+Open `http://localhost:5173`. Vite proxies `/health` and `/api` to the API on port 8000.
+
+## Ad-hoc review workflow
+
+The browser prototype supports one synthetic or public label image per ad-hoc review. Enter the
+expected application values (or select **Load synthetic example**), upload a JPEG or PNG, then
+review the OCR observations and any uncertainty. The current results screen does not make a
+regulatory comparison or determination; that deterministic comparison slice is still pending.
+
+For local mock demonstrations, run the backend with `APP_ENVIRONMENT=test` and `OCR_PROVIDER=mock`,
+then set `VITE_ENABLE_OCR_MOCK_CONTROLS=true` before starting Vite. This exposes only deterministic
+test scenarios and never sends a credential to the browser.
 
 ## Verification
 

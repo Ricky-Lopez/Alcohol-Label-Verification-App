@@ -29,7 +29,6 @@ from app.models.label import (
     NetContentsUnit,
     PostalAddress,
     ResponsibleParty,
-    ResponsiblePartyRole,
     VerificationSubmission,
 )
 from app.models.verification import (
@@ -65,7 +64,6 @@ def expected_label(*, country_of_origin: CountryOfOrigin | None = None) -> Expec
         ),
         responsible_parties=[
             ResponsibleParty(
-                role=ResponsiblePartyRole.DISTILLER,
                 name="Example Distilling Company",
                 address=PostalAddress(
                     city="Frankfort",
