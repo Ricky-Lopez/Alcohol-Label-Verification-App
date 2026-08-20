@@ -21,7 +21,6 @@
       },
       "responsibleParties": [
         {
-          "role": "distiller",
           "name": "Example Distilling Company",
           "address": {
             "streetLines": [],

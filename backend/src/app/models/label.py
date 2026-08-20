@@ -18,17 +18,6 @@ class IntakeSource(StrEnum):
     BATCH = "batch"
 
 
-class ResponsiblePartyRole(StrEnum):
-    BOTTLER = "bottler"
-    PRODUCER = "producer"
-    DISTILLER = "distiller"
-    BREWER = "brewer"
-    WINERY = "winery"
-    IMPORTER = "importer"
-    PACKER = "packer"
-    OTHER = "other"
-
-
 class NetContentsUnit(StrEnum):
     MILLILITER = "mL"
     LITER = "L"
@@ -71,7 +60,6 @@ class PostalAddress(ContractModel):
 
 
 class ResponsibleParty(ContractModel):
-    role: ResponsiblePartyRole
     name: ShortText
     address: PostalAddress
     statement_prefix: Annotated[str, Field(min_length=1, max_length=100)] | None = None

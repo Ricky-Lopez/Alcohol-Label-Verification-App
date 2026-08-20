@@ -41,8 +41,6 @@ export type Region = string | null;
  */
 export type Streetlines = string[];
 export type Name = string;
-export type ResponsiblePartyRole =
-  "bottler" | "producer" | "distiller" | "brewer" | "winery" | "importer" | "packer" | "other";
 export type Statementprefix = string | null;
 export type Imported = boolean;
 export type IntakeSource = "preloaded" | "ad_hoc" | "batch";
@@ -219,7 +217,6 @@ export interface NetContents {
 export interface ResponsibleParty {
   address: PostalAddress;
   name: Name;
-  role: ResponsiblePartyRole;
   statementPrefix?: Statementprefix;
 }
 export interface PostalAddress {

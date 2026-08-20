@@ -851,9 +851,6 @@
           "title": "Name",
           "type": "string"
         },
-        "role": {
-          "$ref": "#/$defs/ResponsiblePartyRole"
-        },
         "statementPrefix": {
           "anyOf": [
             {
@@ -870,26 +867,11 @@
         }
       },
       "required": [
-        "role",
         "name",
         "address"
       ],
       "title": "ResponsibleParty",
       "type": "object"
-    },
-    "ResponsiblePartyRole": {
-      "enum": [
-        "bottler",
-        "producer",
-        "distiller",
-        "brewer",
-        "winery",
-        "importer",
-        "packer",
-        "other"
-      ],
-      "title": "ResponsiblePartyRole",
-      "type": "string"
     },
     "RulesetReference": {
       "additionalProperties": false,
