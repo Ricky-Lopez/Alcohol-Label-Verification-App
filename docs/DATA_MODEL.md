@@ -241,8 +241,8 @@ objects are nested as follows:
 │   ├── segmentId
 │   ├── imageId ──► LabelImageInput.clientImageId
 │   ├── rawText
-│   ├── confidence
-│   ├── region: <strong><em><u>BoundingPolygon</u></em></strong>
+│   ├── confidence (optional)
+│   ├── region: <strong><em><u>BoundingPolygon</u></em></strong> (optional)
 │   │   └── points: <strong><em><u>Point[]</u></em></strong>
 │   │       ├── x
 │   │       └── y
@@ -251,12 +251,13 @@ objects are nested as follows:
 │   ├── field
 │   ├── rawText
 │   ├── normalizedValue (optional)
-│   ├── confidence
+│   ├── confidence (optional)
 │   └── evidenceSegmentIds[] ──► TextSegment.segmentId
 └── issues: <strong><em><u>ExtractionIssue[]</u></em></strong>
     ├── code
     ├── message
-    └── imageId (optional) ──► LabelImageInput.clientImageId</pre>
+    ├── imageId (optional) ──► LabelImageInput.clientImageId
+    └── field (optional)</pre>
 
 The identifiers draw the important lines between otherwise separate objects:
 
@@ -283,6 +284,20 @@ The OCR adapter returns engine-neutral data:
 - field candidates that point to their supporting segment identifiers; and
 - safe issue codes for low confidence, unreadable images, unsupported layouts, timeout, or provider
   unavailability.
+
+OpenAI vision does not supply calibrated OCR confidence or guaranteed bounding geometry. Those
+properties are therefore nullable and must never be fabricated. The provider-specific response
+uses segment indexes; the adapter validates them and assigns the public segment identifiers.
+
+Government-warning candidates preserve the visible wording in `rawText` and leave
+`normalizedValue` null. OCR is instructed not to correct, complete, paraphrase, or normalize the
+warning. Exact comparison against the approved, versioned reference remains deterministic
+comparison-engine work.
+
+Each image is classified as an alcohol label, a non-label image, or uncertain. Non-label images
+produce `not_label_image` rather than field candidates; uncertain and incomplete warning evidence
+produce reviewable issues. Provider timeouts, refusals, and invalid structured responses use safe,
+typed issue codes without exposing provider response content.
 
 Candidate fields include all core and anticipated checks: brand, class/type, alcohol content, net
 contents, responsible-party information, origin, appellation, warning text and presentation,

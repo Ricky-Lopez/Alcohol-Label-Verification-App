@@ -386,10 +386,18 @@
       "additionalProperties": false,
       "properties": {
         "confidence": {
-          "maximum": 1,
-          "minimum": 0,
-          "title": "Confidence",
-          "type": "number"
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Confidence"
         },
         "evidenceSegmentIds": {
           "items": {
@@ -429,7 +437,6 @@
       "required": [
         "field",
         "rawText",
-        "confidence",
         "evidenceSegmentIds"
       ],
       "title": "ExtractedFieldCandidate",
@@ -440,6 +447,17 @@
       "properties": {
         "code": {
           "$ref": "#/$defs/ExtractionIssueCode"
+        },
+        "field": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/VerificationField"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         },
         "imageId": {
           "anyOf": [
@@ -477,7 +495,12 @@
         "image_unreadable",
         "unsupported_layout",
         "extractor_timeout",
-        "extractor_unavailable"
+        "extractor_unavailable",
+        "not_label_image",
+        "label_classification_uncertain",
+        "warning_text_incomplete",
+        "extractor_refused",
+        "extractor_invalid_response"
       ],
       "title": "ExtractionIssueCode",
       "type": "string"
@@ -955,10 +978,18 @@
       "additionalProperties": false,
       "properties": {
         "confidence": {
-          "maximum": 1,
-          "minimum": 0,
-          "title": "Confidence",
-          "type": "number"
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Confidence"
         },
         "imageId": {
           "maxLength": 100,
@@ -988,7 +1019,15 @@
           "type": "string"
         },
         "region": {
-          "$ref": "#/$defs/BoundingPolygon"
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BoundingPolygon"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         },
         "segmentId": {
           "maxLength": 100,
@@ -1001,9 +1040,7 @@
       "required": [
         "segmentId",
         "imageId",
-        "rawText",
-        "confidence",
-        "region"
+        "rawText"
       ],
       "title": "TextSegment",
       "type": "object"

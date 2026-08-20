@@ -205,6 +205,24 @@ def test_ocr_candidates_must_reference_known_segments() -> None:
         )
 
 
+def test_openai_compatible_evidence_can_omit_confidence_and_region() -> None:
+    segment = TextSegment(
+        segment_id="segment-openai-001",
+        image_id="image-001",
+        raw_text="GOVERNMENT WARNING:",
+    )
+    candidate = ExtractedFieldCandidate(
+        field=VerificationField.GOVERNMENT_WARNING_TEXT,
+        raw_text=segment.raw_text,
+        normalized_value=None,
+        evidence_segment_ids=[segment.segment_id],
+    )
+
+    assert segment.confidence is None
+    assert segment.region is None
+    assert candidate.confidence is None
+
+
 def test_no_discrepancies_summary_rejects_review_findings() -> None:
     ruleset = RulesetReference(
         ruleset_id="ttb-prototype",

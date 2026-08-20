@@ -54,7 +54,7 @@ export type Extractionid = string;
 export type Modelversion = string | null;
 export type Name1 = string;
 export type Version = string;
-export type Confidence = number;
+export type Confidence = number | null;
 /**
  * @minItems 1
  */
@@ -86,11 +86,16 @@ export type ExtractionIssueCode =
   | "image_unreadable"
   | "unsupported_layout"
   | "extractor_timeout"
-  | "extractor_unavailable";
+  | "extractor_unavailable"
+  | "not_label_image"
+  | "label_classification_uncertain"
+  | "warning_text_incomplete"
+  | "extractor_refused"
+  | "extractor_invalid_response";
 export type Imageid = string | null;
 export type Message = string;
 export type Issues = ExtractionIssue[];
-export type Confidence1 = number;
+export type Confidence1 = number | null;
 export type Imageid1 = string;
 export type Orientationdegrees = number | null;
 export type Rawtext1 = string;
@@ -240,7 +245,7 @@ export interface ExtractorReference {
   version: Version;
 }
 export interface ExtractedFieldCandidate {
-  confidence: Confidence;
+  confidence?: Confidence;
   evidenceSegmentIds: Evidencesegmentids;
   field: VerificationField;
   normalizedValue?: Normalizedvalue;
@@ -248,15 +253,16 @@ export interface ExtractedFieldCandidate {
 }
 export interface ExtractionIssue {
   code: ExtractionIssueCode;
+  field?: VerificationField | null;
   imageId?: Imageid;
   message: Message;
 }
 export interface TextSegment {
-  confidence: Confidence1;
+  confidence?: Confidence1;
   imageId: Imageid1;
   orientationDegrees?: Orientationdegrees;
   rawText: Rawtext1;
-  region: BoundingPolygon;
+  region?: BoundingPolygon | null;
   segmentId: Segmentid;
 }
 export interface BoundingPolygon {

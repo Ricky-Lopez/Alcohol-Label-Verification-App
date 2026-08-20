@@ -30,9 +30,25 @@ committed. The application recognizes these variables:
 | Variable | Required now | Purpose |
 | --- | --- | --- |
 | `APP_ENVIRONMENT` | Yes | Runtime mode: `development`, `test`, or `production` |
-| `OCR_API_KEY` | No | Reserved for the future OCR adapter; leave unset until a provider is selected |
+| `OCR_PROVIDER` | No | `openai` (default) or `mock`; mock mode is prohibited in production |
+| `OPENAI_API_KEY` | For live OCR | Server-side credential for the OpenAI Responses API |
+| `OPENAI_OCR_MODEL` | No | Vision model; defaults to `gpt-4o-mini` |
+| `OPENAI_IMAGE_DETAIL` | No | OpenAI image detail; defaults to `high` |
+| `OPENAI_OCR_TIMEOUT_SECONDS` | No | Per-image timeout; defaults to `4` seconds |
 
-Never place a real OCR API key in source files, documentation, Docker images, or Git history.
+Never place a real OpenAI API key in source files, documentation, browser bundles, Docker images,
+or Git history.
+
+## OCR extraction API
+
+`POST /api/extractions` accepts `multipart/form-data` with a `submission` JSON field and ordered
+`images` file parts. The backend validates and compresses each JPEG or PNG in memory, then returns
+an `OcrExtractionResult`. It never persists uploaded or processed images.
+
+For keyless local or frontend testing, set `APP_ENVIRONMENT=test` and `OCR_PROVIDER=mock`. The
+mock-only `X-OCR-Mock-Scenario` header accepts the scenario names documented in
+`fixtures/extractions/mock-scenarios.json`. The header is rejected when the OpenAI provider is
+active, and mock mode cannot start in production.
 
 Install and start the API:
 
@@ -110,8 +126,9 @@ Expected response:
 ## Render preparation
 
 The root `render.yaml` defines one Docker web service using `/health` as its health check. During
-initial Blueprint creation, Render prompts for the `OCR_API_KEY` because it is declared with
-`sync: false`. Leave it empty until an OCR provider is selected.
+initial Blueprint creation, Render prompts for `OPENAI_API_KEY` because it is declared with
+`sync: false`. Leave it empty until live OCR testing begins; the application and health endpoint
+remain available without it.
 
 Free Render web services can spin down when idle, so cold-start behavior must be measured separately
 from the application's warmed five-second verification target. Free hosting is suitable for the
