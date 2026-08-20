@@ -47,6 +47,11 @@ class ExtractionIssueCode(StrEnum):
     UNSUPPORTED_LAYOUT = "unsupported_layout"
     EXTRACTOR_TIMEOUT = "extractor_timeout"
     EXTRACTOR_UNAVAILABLE = "extractor_unavailable"
+    NOT_LABEL_IMAGE = "not_label_image"
+    LABEL_CLASSIFICATION_UNCERTAIN = "label_classification_uncertain"
+    WARNING_TEXT_INCOMPLETE = "warning_text_incomplete"
+    EXTRACTOR_REFUSED = "extractor_refused"
+    EXTRACTOR_INVALID_RESPONSE = "extractor_invalid_response"
 
 
 class Point(ContractModel):
@@ -62,8 +67,8 @@ class TextSegment(ContractModel):
     segment_id: Identifier
     image_id: Identifier
     raw_text: LabelText
-    confidence: Confidence
-    region: BoundingPolygon
+    confidence: Confidence | None = None
+    region: BoundingPolygon | None = None
     orientation_degrees: Annotated[float, Field(ge=-180, le=180)] | None = None
 
 
@@ -71,7 +76,7 @@ class ExtractedFieldCandidate(ContractModel):
     field: VerificationField
     raw_text: LabelText
     normalized_value: Annotated[str, Field(min_length=1, max_length=5_000)] | None = None
-    confidence: Confidence
+    confidence: Confidence | None = None
     evidence_segment_ids: Annotated[list[Identifier], Field(min_length=1)]
 
 
@@ -79,6 +84,7 @@ class ExtractionIssue(ContractModel):
     code: ExtractionIssueCode
     message: ShortText
     image_id: Identifier | None = None
+    field: VerificationField | None = None
 
 
 class ExtractorReference(ContractModel):

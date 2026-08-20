@@ -9,7 +9,10 @@ description = "API for the alcohol label verification prototype"
 requires-python = ">=3.12,<3.14"
 dependencies = [
     "fastapi>=0.116,<1",
+    "openai>=2.26,<3",
+    "pillow>=12,<13",
     "pydantic-settings>=2.10,<3",
+    "python-multipart>=0.0.22,<1",
     "uvicorn[standard]>=0.35,<1",
 ]
 
