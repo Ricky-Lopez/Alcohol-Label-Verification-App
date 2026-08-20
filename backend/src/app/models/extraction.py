@@ -1,7 +1,7 @@
 from enum import StrEnum
 from typing import Annotated
 
-from pydantic import Field, model_validator
+from pydantic import ConfigDict, Field, model_validator
 
 from app.models.base import (
     Confidence,
@@ -64,6 +64,8 @@ class BoundingPolygon(ContractModel):
 
 
 class TextSegment(ContractModel):
+    model_config = ConfigDict(str_strip_whitespace=False)
+
     segment_id: Identifier
     image_id: Identifier
     raw_text: LabelText
@@ -73,6 +75,8 @@ class TextSegment(ContractModel):
 
 
 class ExtractedFieldCandidate(ContractModel):
+    model_config = ConfigDict(str_strip_whitespace=False)
+
     field: VerificationField
     raw_text: LabelText
     normalized_value: Annotated[str, Field(min_length=1, max_length=5_000)] | None = None
@@ -93,12 +97,18 @@ class ExtractorReference(ContractModel):
     model_version: ShortText | None = None
 
 
+class ExtractionTiming(ContractModel):
+    image_preparation_ms: DurationMilliseconds
+    provider_ms: DurationMilliseconds
+
+
 class OcrExtractionResult(ContractModel):
     extraction_id: Identifier
     submission_id: Identifier
     status: ExtractionStatus
     extractor: ExtractorReference
     duration_ms: DurationMilliseconds
+    timing: ExtractionTiming
     segments: list[TextSegment] = Field(default_factory=list)
     field_candidates: list[ExtractedFieldCandidate] = Field(default_factory=list)
     issues: list[ExtractionIssue] = Field(default_factory=list)

@@ -108,6 +108,8 @@ export type Segmentid = string;
 export type Segments = TextSegment[];
 export type ExtractionStatus = "succeeded" | "partial" | "failed";
 export type Submissionid = string;
+export type Imagepreparationms = number;
+export type Providerms = number;
 /**
  * @minItems 1
  * @maxItems 12
@@ -235,6 +237,7 @@ export interface OcrExtractionResult {
   segments?: Segments;
   status: ExtractionStatus;
   submissionId: Submissionid;
+  timing: ExtractionTiming;
 }
 export interface ExtractorReference {
   modelVersion?: Modelversion;
@@ -268,6 +271,10 @@ export interface BoundingPolygon {
 export interface Point {
   x: X;
   y: Y;
+}
+export interface ExtractionTiming {
+  imagePreparationMs: Imagepreparationms;
+  providerMs: Providerms;
 }
 export interface LabelImageInput {
   clientImageId: Clientimageid;

@@ -102,6 +102,9 @@ async def test_mock_scenarios_return_typed_extraction_results(
 
     assert status == scenario_case["httpStatus"]
     assert body["status"] == scenario_case["extractionStatus"]
+    assert body["durationMs"] >= 0
+    assert body["timing"]["imagePreparationMs"] >= 0
+    assert body["timing"]["providerMs"] >= 0
     issue_code = scenario_case["issueCode"]
     if issue_code is None:
         assert body["issues"] == []
@@ -120,6 +123,29 @@ async def test_warning_text_remains_verbatim_and_unnormalized() -> None:
     )
     assert "may cause serious health problems" in warning["rawText"]
     assert warning["normalizedValue"] is None
+
+
+@pytest.mark.anyio
+async def test_success_mock_extracts_every_agreed_label_observation() -> None:
+    _, body = await post_extraction(scenario="success")
+
+    fields = {candidate["field"] for candidate in body["fieldCandidates"]}
+    assert fields == {
+        "brand_name",
+        "class_type_designation",
+        "alcohol_content",
+        "net_contents",
+        "responsible_party_name",
+        "responsible_party_address",
+        "country_of_origin",
+        "government_warning_text",
+        "government_warning_heading_case",
+        "government_warning_heading_weight",
+    }
+    segment_ids = {segment["segmentId"] for segment in body["segments"]}
+    assert all(
+        candidate["evidenceSegmentIds"][0] in segment_ids for candidate in body["fieldCandidates"]
+    )
 
 
 @pytest.mark.anyio

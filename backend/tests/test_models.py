@@ -10,6 +10,7 @@ from app.models.extraction import (
     BoundingPolygon,
     ExtractedFieldCandidate,
     ExtractionStatus,
+    ExtractionTiming,
     ExtractorReference,
     OcrExtractionResult,
     Point,
@@ -124,6 +125,7 @@ def extraction_result() -> OcrExtractionResult:
         status=ExtractionStatus.SUCCEEDED,
         extractor=ExtractorReference(name="synthetic-ocr", version="0.1.0"),
         duration_ms=100,
+        timing=ExtractionTiming(image_preparation_ms=20, provider_ms=75),
         segments=[segment],
         field_candidates=[
             ExtractedFieldCandidate(
@@ -198,6 +200,7 @@ def test_ocr_candidates_must_reference_known_segments() -> None:
             status=extraction.status,
             extractor=extraction.extractor,
             duration_ms=extraction.duration_ms,
+            timing=extraction.timing,
             segments=extraction.segments,
             field_candidates=[bad_candidate],
         )

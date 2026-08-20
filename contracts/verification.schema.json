@@ -514,6 +514,27 @@
       "title": "ExtractionStatus",
       "type": "string"
     },
+    "ExtractionTiming": {
+      "additionalProperties": false,
+      "properties": {
+        "imagePreparationMs": {
+          "minimum": 0,
+          "title": "Imagepreparationms",
+          "type": "integer"
+        },
+        "providerMs": {
+          "minimum": 0,
+          "title": "Providerms",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "imagePreparationMs",
+        "providerMs"
+      ],
+      "title": "ExtractionTiming",
+      "type": "object"
+    },
     "ExtractorReference": {
       "additionalProperties": false,
       "properties": {
@@ -735,6 +756,9 @@
           "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
           "title": "Submissionid",
           "type": "string"
+        },
+        "timing": {
+          "$ref": "#/$defs/ExtractionTiming"
         }
       },
       "required": [
@@ -742,7 +766,8 @@
         "submissionId",
         "status",
         "extractor",
-        "durationMs"
+        "durationMs",
+        "timing"
       ],
       "title": "OcrExtractionResult",
       "type": "object"
