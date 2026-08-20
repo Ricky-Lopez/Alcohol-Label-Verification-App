@@ -1,0 +1,1267 @@
+{
+  "$defs": {
+    "AlcoholContent": {
+      "additionalProperties": false,
+      "properties": {
+        "abvPercent": {
+          "maximum": 100,
+          "minimum": 0,
+          "title": "Abvpercent",
+          "type": "number"
+        },
+        "expectedDisplayText": {
+          "anyOf": [
+            {
+              "maxLength": 255,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Expecteddisplaytext"
+        },
+        "proof": {
+          "anyOf": [
+            {
+              "maximum": 200,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Proof"
+        }
+      },
+      "required": [
+        "abvPercent"
+      ],
+      "title": "AlcoholContent",
+      "type": "object"
+    },
+    "ApplicationRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "beverageType": {
+          "$ref": "#/$defs/BeverageType"
+        },
+        "expectedLabel": {
+          "$ref": "#/$defs/ExpectedLabelFields"
+        },
+        "imported": {
+          "title": "Imported",
+          "type": "boolean"
+        },
+        "intakeSource": {
+          "$ref": "#/$defs/IntakeSource"
+        },
+        "recordId": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "title": "Recordid",
+          "type": "string"
+        },
+        "schemaVersion": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schemaversion",
+          "type": "string"
+        }
+      },
+      "required": [
+        "recordId",
+        "intakeSource",
+        "beverageType",
+        "imported",
+        "expectedLabel"
+      ],
+      "title": "ApplicationRecord",
+      "type": "object"
+    },
+    "BeverageType": {
+      "enum": [
+        "beer",
+        "wine",
+        "distilled_spirits"
+      ],
+      "title": "BeverageType",
+      "type": "string"
+    },
+    "BoundingPolygon": {
+      "additionalProperties": false,
+      "properties": {
+        "points": {
+          "items": {
+            "$ref": "#/$defs/Point"
+          },
+          "maxItems": 8,
+          "minItems": 3,
+          "title": "Points",
+          "type": "array"
+        }
+      },
+      "required": [
+        "points"
+      ],
+      "title": "BoundingPolygon",
+      "type": "object"
+    },
+    "ComparisonInput": {
+      "additionalProperties": false,
+      "properties": {
+        "application": {
+          "$ref": "#/$defs/ApplicationRecord"
+        },
+        "comparisonId": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "title": "Comparisonid",
+          "type": "string"
+        },
+        "extraction": {
+          "$ref": "#/$defs/OcrExtractionResult"
+        },
+        "images": {
+          "items": {
+            "$ref": "#/$defs/LabelImageInput"
+          },
+          "maxItems": 12,
+          "minItems": 1,
+          "title": "Images",
+          "type": "array"
+        },
+        "ruleset": {
+          "$ref": "#/$defs/RulesetReference"
+        }
+      },
+      "required": [
+        "comparisonId",
+        "application",
+        "images",
+        "extraction",
+        "ruleset"
+      ],
+      "title": "ComparisonInput",
+      "type": "object"
+    },
+    "ComparisonValue": {
+      "additionalProperties": false,
+      "properties": {
+        "displayValue": {
+          "maxLength": 5000,
+          "minLength": 1,
+          "title": "Displayvalue",
+          "type": "string"
+        },
+        "normalizedValue": {
+          "anyOf": [
+            {
+              "maxLength": 5000,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Normalizedvalue"
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "maxLength": 255,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unit"
+        }
+      },
+      "required": [
+        "displayValue"
+      ],
+      "title": "ComparisonValue",
+      "type": "object"
+    },
+    "CountryOfOrigin": {
+      "additionalProperties": false,
+      "properties": {
+        "countryCode": {
+          "pattern": "^[A-Z]{2}$",
+          "title": "Countrycode",
+          "type": "string"
+        },
+        "displayName": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Displayname",
+          "type": "string"
+        }
+      },
+      "required": [
+        "countryCode",
+        "displayName"
+      ],
+      "title": "CountryOfOrigin",
+      "type": "object"
+    },
+    "EvidenceReference": {
+      "additionalProperties": false,
+      "properties": {
+        "excerpt": {
+          "anyOf": [
+            {
+              "maxLength": 5000,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Excerpt"
+        },
+        "imageId": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "title": "Imageid",
+          "type": "string"
+        },
+        "region": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BoundingPolygon"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "segmentIds": {
+          "items": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "type": "string"
+          },
+          "title": "Segmentids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "imageId"
+      ],
+      "title": "EvidenceReference",
+      "type": "object"
+    },
+    "ExpectedLabelFields": {
+      "additionalProperties": false,
+      "properties": {
+        "additionalRequiredStatements": {
+          "items": {
+            "$ref": "#/$defs/ExpectedStatement"
+          },
+          "title": "Additionalrequiredstatements",
+          "type": "array"
+        },
+        "alcoholContent": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AlcoholContent"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "appellationOfOrigin": {
+          "anyOf": [
+            {
+              "maxLength": 255,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Appellationoforigin"
+        },
+        "brandName": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Brandname",
+          "type": "string"
+        },
+        "classTypeDesignation": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Classtypedesignation",
+          "type": "string"
+        },
+        "countryOfOrigin": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CountryOfOrigin"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "netContents": {
+          "$ref": "#/$defs/NetContents"
+        },
+        "responsibleParties": {
+          "items": {
+            "$ref": "#/$defs/ResponsibleParty"
+          },
+          "minItems": 1,
+          "title": "Responsibleparties",
+          "type": "array"
+        }
+      },
+      "required": [
+        "brandName",
+        "classTypeDesignation",
+        "netContents",
+        "responsibleParties"
+      ],
+      "title": "ExpectedLabelFields",
+      "type": "object"
+    },
+    "ExpectedStatement": {
+      "additionalProperties": false,
+      "properties": {
+        "expectedText": {
+          "maxLength": 5000,
+          "minLength": 1,
+          "title": "Expectedtext",
+          "type": "string"
+        },
+        "ruleReference": {
+          "anyOf": [
+            {
+              "maxLength": 255,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rulereference"
+        },
+        "statementType": {
+          "$ref": "#/$defs/StatementType"
+        }
+      },
+      "required": [
+        "statementType",
+        "expectedText"
+      ],
+      "title": "ExpectedStatement",
+      "type": "object"
+    },
+    "ExtractedFieldCandidate": {
+      "additionalProperties": false,
+      "properties": {
+        "confidence": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "evidenceSegmentIds": {
+          "items": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Evidencesegmentids",
+          "type": "array"
+        },
+        "field": {
+          "$ref": "#/$defs/VerificationField"
+        },
+        "normalizedValue": {
+          "anyOf": [
+            {
+              "maxLength": 5000,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Normalizedvalue"
+        },
+        "rawText": {
+          "maxLength": 5000,
+          "minLength": 1,
+          "title": "Rawtext",
+          "type": "string"
+        }
+      },
+      "required": [
+        "field",
+        "rawText",
+        "confidence",
+        "evidenceSegmentIds"
+      ],
+      "title": "ExtractedFieldCandidate",
+      "type": "object"
+    },
+    "ExtractionIssue": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "$ref": "#/$defs/ExtractionIssueCode"
+        },
+        "imageId": {
+          "anyOf": [
+            {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Imageid"
+        },
+        "message": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Message",
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "title": "ExtractionIssue",
+      "type": "object"
+    },
+    "ExtractionIssueCode": {
+      "enum": [
+        "low_confidence",
+        "no_text_found",
+        "image_unreadable",
+        "unsupported_layout",
+        "extractor_timeout",
+        "extractor_unavailable"
+      ],
+      "title": "ExtractionIssueCode",
+      "type": "string"
+    },
+    "ExtractionStatus": {
+      "enum": [
+        "succeeded",
+        "partial",
+        "failed"
+      ],
+      "title": "ExtractionStatus",
+      "type": "string"
+    },
+    "ExtractorReference": {
+      "additionalProperties": false,
+      "properties": {
+        "modelVersion": {
+          "anyOf": [
+            {
+              "maxLength": 255,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Modelversion"
+        },
+        "name": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "version": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "version"
+      ],
+      "title": "ExtractorReference",
+      "type": "object"
+    },
+    "FindingSeverity": {
+      "enum": [
+        "information",
+        "review",
+        "discrepancy"
+      ],
+      "title": "FindingSeverity",
+      "type": "string"
+    },
+    "ImageMediaType": {
+      "enum": [
+        "image/jpeg",
+        "image/png"
+      ],
+      "title": "ImageMediaType",
+      "type": "string"
+    },
+    "IntakeSource": {
+      "enum": [
+        "preloaded",
+        "ad_hoc",
+        "batch"
+      ],
+      "title": "IntakeSource",
+      "type": "string"
+    },
+    "LabelImageInput": {
+      "additionalProperties": false,
+      "properties": {
+        "clientImageId": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "title": "Clientimageid",
+          "type": "string"
+        },
+        "fileName": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Filename",
+          "type": "string"
+        },
+        "mediaType": {
+          "$ref": "#/$defs/ImageMediaType"
+        },
+        "panelType": {
+          "$ref": "#/$defs/LabelPanelType",
+          "default": "unknown"
+        },
+        "sha256": {
+          "anyOf": [
+            {
+              "maxLength": 64,
+              "minLength": 64,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sha256"
+        },
+        "sizeBytes": {
+          "exclusiveMinimum": 0,
+          "maximum": 20000000,
+          "title": "Sizebytes",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "clientImageId",
+        "fileName",
+        "mediaType",
+        "sizeBytes"
+      ],
+      "title": "LabelImageInput",
+      "type": "object"
+    },
+    "LabelPanelType": {
+      "enum": [
+        "brand",
+        "back",
+        "side",
+        "neck",
+        "other",
+        "unknown"
+      ],
+      "title": "LabelPanelType",
+      "type": "string"
+    },
+    "NetContents": {
+      "additionalProperties": false,
+      "properties": {
+        "expectedDisplayText": {
+          "anyOf": [
+            {
+              "maxLength": 255,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Expecteddisplaytext"
+        },
+        "unit": {
+          "$ref": "#/$defs/NetContentsUnit"
+        },
+        "value": {
+          "exclusiveMinimum": 0,
+          "title": "Value",
+          "type": "number"
+        }
+      },
+      "required": [
+        "value",
+        "unit"
+      ],
+      "title": "NetContents",
+      "type": "object"
+    },
+    "NetContentsUnit": {
+      "enum": [
+        "mL",
+        "L",
+        "fl_oz",
+        "pt",
+        "qt",
+        "gal"
+      ],
+      "title": "NetContentsUnit",
+      "type": "string"
+    },
+    "OcrExtractionResult": {
+      "additionalProperties": false,
+      "properties": {
+        "durationMs": {
+          "minimum": 0,
+          "title": "Durationms",
+          "type": "integer"
+        },
+        "extractionId": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "title": "Extractionid",
+          "type": "string"
+        },
+        "extractor": {
+          "$ref": "#/$defs/ExtractorReference"
+        },
+        "fieldCandidates": {
+          "items": {
+            "$ref": "#/$defs/ExtractedFieldCandidate"
+          },
+          "title": "Fieldcandidates",
+          "type": "array"
+        },
+        "issues": {
+          "items": {
+            "$ref": "#/$defs/ExtractionIssue"
+          },
+          "title": "Issues",
+          "type": "array"
+        },
+        "segments": {
+          "items": {
+            "$ref": "#/$defs/TextSegment"
+          },
+          "title": "Segments",
+          "type": "array"
+        },
+        "status": {
+          "$ref": "#/$defs/ExtractionStatus"
+        },
+        "submissionId": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "title": "Submissionid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "extractionId",
+        "submissionId",
+        "status",
+        "extractor",
+        "durationMs"
+      ],
+      "title": "OcrExtractionResult",
+      "type": "object"
+    },
+    "OverallReviewStatus": {
+      "enum": [
+        "no_discrepancies_found",
+        "review_needed",
+        "analysis_incomplete"
+      ],
+      "title": "OverallReviewStatus",
+      "type": "string"
+    },
+    "Point": {
+      "additionalProperties": false,
+      "properties": {
+        "x": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "X",
+          "type": "number"
+        },
+        "y": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Y",
+          "type": "number"
+        }
+      },
+      "required": [
+        "x",
+        "y"
+      ],
+      "title": "Point",
+      "type": "object"
+    },
+    "PostalAddress": {
+      "additionalProperties": false,
+      "properties": {
+        "city": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "City",
+          "type": "string"
+        },
+        "countryCode": {
+          "pattern": "^[A-Z]{2}$",
+          "title": "Countrycode",
+          "type": "string"
+        },
+        "postalCode": {
+          "anyOf": [
+            {
+              "maxLength": 32,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Postalcode"
+        },
+        "region": {
+          "anyOf": [
+            {
+              "maxLength": 255,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Region"
+        },
+        "streetLines": {
+          "items": {
+            "maxLength": 255,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 4,
+          "title": "Streetlines",
+          "type": "array"
+        }
+      },
+      "required": [
+        "city",
+        "countryCode"
+      ],
+      "title": "PostalAddress",
+      "type": "object"
+    },
+    "ResponsibleParty": {
+      "additionalProperties": false,
+      "properties": {
+        "address": {
+          "$ref": "#/$defs/PostalAddress"
+        },
+        "name": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "role": {
+          "$ref": "#/$defs/ResponsiblePartyRole"
+        },
+        "statementPrefix": {
+          "anyOf": [
+            {
+              "maxLength": 100,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Statementprefix"
+        }
+      },
+      "required": [
+        "role",
+        "name",
+        "address"
+      ],
+      "title": "ResponsibleParty",
+      "type": "object"
+    },
+    "ResponsiblePartyRole": {
+      "enum": [
+        "bottler",
+        "producer",
+        "distiller",
+        "brewer",
+        "winery",
+        "importer",
+        "packer",
+        "other"
+      ],
+      "title": "ResponsiblePartyRole",
+      "type": "string"
+    },
+    "RulesetReference": {
+      "additionalProperties": false,
+      "properties": {
+        "effectiveDate": {
+          "format": "date",
+          "title": "Effectivedate",
+          "type": "string"
+        },
+        "rulesetId": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "title": "Rulesetid",
+          "type": "string"
+        },
+        "sourceUri": {
+          "anyOf": [
+            {
+              "maxLength": 2000,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sourceuri"
+        },
+        "version": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "rulesetId",
+        "version",
+        "effectiveDate"
+      ],
+      "title": "RulesetReference",
+      "type": "object"
+    },
+    "StatementType": {
+      "enum": [
+        "sulfites",
+        "color_additive",
+        "aspartame",
+        "age",
+        "statement_of_composition",
+        "foreign_wine_percentage",
+        "other"
+      ],
+      "title": "StatementType",
+      "type": "string"
+    },
+    "SubmissionTransport": {
+      "additionalProperties": false,
+      "description": "Documents the multipart boundary without embedding image bytes in JSON.",
+      "properties": {
+        "applicationPart": {
+          "const": "submission",
+          "default": "submission",
+          "title": "Applicationpart",
+          "type": "string"
+        },
+        "encoding": {
+          "const": "multipart/form-data",
+          "default": "multipart/form-data",
+          "title": "Encoding",
+          "type": "string"
+        },
+        "filePart": {
+          "const": "images",
+          "default": "images",
+          "title": "Filepart",
+          "type": "string"
+        }
+      },
+      "title": "SubmissionTransport",
+      "type": "object"
+    },
+    "TextSegment": {
+      "additionalProperties": false,
+      "properties": {
+        "confidence": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "imageId": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "title": "Imageid",
+          "type": "string"
+        },
+        "orientationDegrees": {
+          "anyOf": [
+            {
+              "maximum": 180,
+              "minimum": -180,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Orientationdegrees"
+        },
+        "rawText": {
+          "maxLength": 5000,
+          "minLength": 1,
+          "title": "Rawtext",
+          "type": "string"
+        },
+        "region": {
+          "$ref": "#/$defs/BoundingPolygon"
+        },
+        "segmentId": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "title": "Segmentid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "segmentId",
+        "imageId",
+        "rawText",
+        "confidence",
+        "region"
+      ],
+      "title": "TextSegment",
+      "type": "object"
+    },
+    "VerificationField": {
+      "enum": [
+        "brand_name",
+        "class_type_designation",
+        "alcohol_content",
+        "net_contents",
+        "responsible_party_name",
+        "responsible_party_address",
+        "country_of_origin",
+        "appellation_of_origin",
+        "government_warning_text",
+        "government_warning_heading_case",
+        "government_warning_heading_weight",
+        "government_warning_prominence",
+        "government_warning_placement",
+        "government_warning_type_size",
+        "same_field_of_vision",
+        "general_legibility",
+        "additional_required_statement"
+      ],
+      "title": "VerificationField",
+      "type": "string"
+    },
+    "VerificationFinding": {
+      "additionalProperties": false,
+      "properties": {
+        "confidence": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Confidence"
+        },
+        "detected": {
+          "items": {
+            "$ref": "#/$defs/ComparisonValue"
+          },
+          "title": "Detected",
+          "type": "array"
+        },
+        "evidence": {
+          "items": {
+            "$ref": "#/$defs/EvidenceReference"
+          },
+          "title": "Evidence",
+          "type": "array"
+        },
+        "expected": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ComparisonValue"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "explanation": {
+          "maxLength": 5000,
+          "minLength": 1,
+          "title": "Explanation",
+          "type": "string"
+        },
+        "field": {
+          "$ref": "#/$defs/VerificationField"
+        },
+        "outcome": {
+          "$ref": "#/$defs/VerificationOutcome"
+        },
+        "ruleId": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "title": "Ruleid",
+          "type": "string"
+        },
+        "severity": {
+          "$ref": "#/$defs/FindingSeverity"
+        }
+      },
+      "required": [
+        "field",
+        "outcome",
+        "severity",
+        "ruleId",
+        "explanation"
+      ],
+      "title": "VerificationFinding",
+      "type": "object"
+    },
+    "VerificationOutcome": {
+      "enum": [
+        "match",
+        "possible_match",
+        "mismatch",
+        "not_found",
+        "not_applicable",
+        "unable_to_evaluate"
+      ],
+      "title": "VerificationOutcome",
+      "type": "string"
+    },
+    "VerificationResult": {
+      "additionalProperties": false,
+      "properties": {
+        "completedAt": {
+          "format": "date-time",
+          "title": "Completedat",
+          "type": "string"
+        },
+        "decisionSupportOnly": {
+          "const": true,
+          "default": true,
+          "title": "Decisionsupportonly",
+          "type": "boolean"
+        },
+        "durationMs": {
+          "minimum": 0,
+          "title": "Durationms",
+          "type": "integer"
+        },
+        "extractor": {
+          "$ref": "#/$defs/ExtractorReference"
+        },
+        "findings": {
+          "items": {
+            "$ref": "#/$defs/VerificationFinding"
+          },
+          "minItems": 1,
+          "title": "Findings",
+          "type": "array"
+        },
+        "overallStatus": {
+          "$ref": "#/$defs/OverallReviewStatus"
+        },
+        "recordId": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "title": "Recordid",
+          "type": "string"
+        },
+        "ruleset": {
+          "$ref": "#/$defs/RulesetReference"
+        },
+        "schemaVersion": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schemaversion",
+          "type": "string"
+        },
+        "startedAt": {
+          "format": "date-time",
+          "title": "Startedat",
+          "type": "string"
+        },
+        "submissionId": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "title": "Submissionid",
+          "type": "string"
+        },
+        "verificationId": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "title": "Verificationid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "verificationId",
+        "submissionId",
+        "recordId",
+        "overallStatus",
+        "ruleset",
+        "extractor",
+        "findings",
+        "startedAt",
+        "completedAt",
+        "durationMs"
+      ],
+      "title": "VerificationResult",
+      "type": "object"
+    },
+    "VerificationSubmission": {
+      "additionalProperties": false,
+      "properties": {
+        "application": {
+          "$ref": "#/$defs/ApplicationRecord"
+        },
+        "images": {
+          "items": {
+            "$ref": "#/$defs/LabelImageInput"
+          },
+          "maxItems": 12,
+          "minItems": 1,
+          "title": "Images",
+          "type": "array"
+        },
+        "submissionId": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "title": "Submissionid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "submissionId",
+        "application",
+        "images"
+      ],
+      "title": "VerificationSubmission",
+      "type": "object"
+    }
+  },
+  "$id": "https://alcohol-label-verification.local/contracts/verification.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Schema bundle used to generate frontend boundary types.",
+  "properties": {
+    "comparisonInput": {
+      "$ref": "#/$defs/ComparisonInput"
+    },
+    "extraction": {
+      "$ref": "#/$defs/OcrExtractionResult"
+    },
+    "result": {
+      "$ref": "#/$defs/VerificationResult"
+    },
+    "submission": {
+      "$ref": "#/$defs/VerificationSubmission"
+    },
+    "submissionTransport": {
+      "$ref": "#/$defs/SubmissionTransport"
+    }
+  },
+  "required": [
+    "submission",
+    "submissionTransport",
+    "extraction",
+    "comparisonInput",
+    "result"
+  ],
+  "title": "VerificationContract",
+  "type": "object"
+}
