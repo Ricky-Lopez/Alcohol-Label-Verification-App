@@ -132,6 +132,14 @@ export type Comparisonid1 = string;
  */
 export type Images1 = [LabelImageInput, ...LabelImageInput[]];
 export type Submissionid1 = string;
+export type Comment = string | null;
+export type HumanReviewDecision = "approved" | "rejected";
+export type Comment1 = string | null;
+export type Decidedat = string;
+export type Decisionid = string;
+export type Queueitemid = string;
+export type Remainingcount = number;
+export type Undoexpiresat = string;
 export type Completedat = string;
 export type Decisionsupportonly = true;
 export type Durationms1 = number;
@@ -159,6 +167,22 @@ export type Schemaversion1 = "1.0";
 export type Startedat = string;
 export type Submissionid2 = string;
 export type Verificationid = string;
+export type Attentioncount = number;
+export type Beveragetype = string;
+export type Brandname1 = string;
+export type Position = number;
+export type Queueitemid1 = string;
+export type Queuedat = string;
+export type Recordid2 = string;
+export type Version2 = number;
+export type Items = ReviewQueueItemSummary[];
+export type Sessionscoped = boolean;
+export type Totalcount = number;
+export type Alttext = string;
+export type Imageid3 = string;
+export type Imageurl = string;
+export type LabelPanelType1 = "brand" | "back" | "side" | "neck" | "other" | "unknown";
+export type Images2 = ReviewQueueImage[];
 export type Applicationpart = "submission";
 export type Encoding = "multipart/form-data";
 export type Filepart = "images";
@@ -170,7 +194,11 @@ export interface VerificationContract {
   comparisonInput: ComparisonInput;
   comparisonRequest: ComparisonRequest;
   extraction: OcrExtractionResult;
+  humanReviewDecisionRequest: HumanReviewDecisionRequest;
+  humanReviewReceipt: HumanReviewReceipt;
   result: VerificationResult;
+  reviewQueue: ReviewQueueResponse;
+  reviewQueueItem: ReviewQueueItemDetail;
   submission: VerificationSubmission;
   submissionTransport: SubmissionTransport;
 }
@@ -305,6 +333,19 @@ export interface VerificationSubmission {
   images: Images1;
   submissionId: Submissionid1;
 }
+export interface HumanReviewDecisionRequest {
+  comment?: Comment;
+  decision: HumanReviewDecision;
+}
+export interface HumanReviewReceipt {
+  comment?: Comment1;
+  decidedAt: Decidedat;
+  decision: HumanReviewDecision;
+  decisionId: Decisionid;
+  queueItemId: Queueitemid;
+  remainingCount: Remainingcount;
+  undoExpiresAt: Undoexpiresat;
+}
 export interface VerificationResult {
   completedAt: Completedat;
   decisionSupportOnly?: Decisionsupportonly;
@@ -340,6 +381,34 @@ export interface EvidenceReference {
   imageId: Imageid2;
   region?: BoundingPolygon | null;
   segmentIds?: Segmentids;
+}
+export interface ReviewQueueResponse {
+  items: Items;
+  sessionScoped?: Sessionscoped;
+  totalCount: Totalcount;
+}
+export interface ReviewQueueItemSummary {
+  attentionCount: Attentioncount;
+  beverageType: Beveragetype;
+  brandName: Brandname1;
+  overallStatus: OverallReviewStatus;
+  position: Position;
+  queueItemId: Queueitemid1;
+  queuedAt: Queuedat;
+  recordId: Recordid2;
+  version: Version2;
+}
+export interface ReviewQueueItemDetail {
+  application: ApplicationRecord;
+  images: Images2;
+  summary: ReviewQueueItemSummary;
+  verification: VerificationResult;
+}
+export interface ReviewQueueImage {
+  altText: Alttext;
+  imageId: Imageid3;
+  imageUrl: Imageurl;
+  panelType: LabelPanelType1;
 }
 /**
  * Documents the multipart boundary without embedding image bytes in JSON.

@@ -7,6 +7,7 @@ import {
   type PendingLabelImage
 } from './api/extractions'
 import { requestComparison, type ComparisonApiOutcome } from './api/comparisons'
+import { ReviewerHub } from './ReviewerHub'
 import type {
   ApplicationRecord,
   BeverageType,
@@ -147,7 +148,7 @@ export const buildSubmission = (values: FormValues, image: PendingLabelImage): V
   return { submissionId: `submission-${crypto.randomUUID()}`, application, images: [image.metadata] }
 }
 
-export const App = () => {
+const ApplicationInput = () => {
   const [state, dispatch] = useReducer(workflowReducer, undefined, initialState)
   const [serviceState, setServiceState] = useState<'loading' | 'ready' | 'error'>('loading')
   const [serviceMessage, setServiceMessage] = useState('Checking verification service…')
@@ -225,3 +226,12 @@ const ExtractionReview = ({ outcome, comparison, image, onRetry, onRetryComparis
 }
 
 const VerificationReview = ({ result, image, onBack, onStartNew }: { result: VerificationResult; image: PendingLabelImage | null; onBack: () => void; onStartNew: () => void }) => <section className="workflow-card extraction-review" aria-live="polite"><p className="step-caption">Step 3 of 3</p><h2>{statusLabel[result.overallStatus]}</h2><p className="result-disclaimer">These results assist human review and are not a final compliance determination.</p>{image && <div className="review-image"><img src={image.previewUrl} alt={`Uploaded label: ${image.metadata.fileName}`} /><p>Image: {image.metadata.fileName}</p></div>}<p className="record-reference">Record: {result.recordId}<br />Submission: {result.submissionId}<br />Ruleset: {result.ruleset.rulesetId} {result.ruleset.version}</p><h3>Label requirement findings</h3><div className="finding-list">{result.findings.map((finding, index) => <article className={`finding finding--${finding.severity}`} key={`${finding.field}-${finding.ruleId}-${index}`}><h4><span aria-hidden="true">{finding.outcome === 'match' || finding.outcome === 'not_applicable' ? '✓' : finding.outcome === 'mismatch' || finding.outcome === 'not_found' ? '!' : '?'}</span> {fieldLabels[finding.field]}: {finding.outcome.replaceAll('_', ' ')}</h4><p>{finding.explanation}</p>{finding.expected && <p><strong>Expected:</strong> {finding.expected.displayValue}</p>}{finding.detected?.length ? <div><strong>Detected:</strong><ul>{finding.detected.map((value, valueIndex) => <li className={finding.field === 'government_warning_text' ? 'verbatim-text' : undefined} key={`${value.displayValue}-${valueIndex}`}>{value.displayValue}</li>)}</ul></div> : null}{finding.evidence?.length ? <p><strong>Evidence:</strong> {finding.evidence.map((evidence) => evidence.excerpt).filter(Boolean).join(' | ')}</p> : null}</article>)}</div><div className="actions"><button type="button" className="secondary-button" onClick={onBack}>Back to upload</button><button type="button" className="secondary-button" onClick={onStartNew}>Start new review</button></div></section>
+
+type PrimaryView = 'home' | 'reviewer-hub' | 'application-input'
+
+const Home = ({ onOpenHub, onOpenInput }: { onOpenHub: () => void; onOpenInput: () => void }) => <section className="home-options" aria-labelledby="home-title"><p className="eyebrow">Reviewer workspace</p><h2 id="home-title">Choose a workspace</h2><p>Reviewer Hub is the primary workflow for applications already processed by OCR and comparison.</p><div className="workspace-options"><button type="button" className="workspace-option workspace-option--primary" onClick={onOpenHub}><span>Primary workflow</span><strong>Open Reviewer Hub</strong><small>Review the queue, inspect evidence, then approve or reject each application.</small></button><button type="button" className="workspace-option" onClick={onOpenInput}><span>Side feature</span><strong>Application Input</strong><small>Manually enter a synthetic or exceptional application and upload one label image.</small></button></div></section>
+
+export const App = () => {
+  const [view, setView] = useState<PrimaryView>('home')
+  return <main className="app-shell"><header className="app-header"><p className="eyebrow">Decision-support prototype</p><h1>Alcohol Label Verification</h1><p className="lede">Human reviewers make the final application decision. OCR and comparison results provide evidence for that review.</p><nav className="app-nav" aria-label="Primary navigation"><button type="button" className="secondary-button" onClick={() => setView('home')}>Home</button><button type="button" className="secondary-button" onClick={() => setView('reviewer-hub')}>Reviewer Hub</button><button type="button" className="secondary-button" onClick={() => setView('application-input')}>Application Input</button></nav></header>{view === 'home' && <Home onOpenHub={() => setView('reviewer-hub')} onOpenInput={() => setView('application-input')} />}{view === 'reviewer-hub' && <ReviewerHub onHome={() => setView('home')} />}{view === 'application-input' && <ApplicationInput />}</main>
+}

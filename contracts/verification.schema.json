@@ -607,6 +607,101 @@
       "title": "FindingSeverity",
       "type": "string"
     },
+    "HumanReviewDecision": {
+      "enum": [
+        "approved",
+        "rejected"
+      ],
+      "title": "HumanReviewDecision",
+      "type": "string"
+    },
+    "HumanReviewDecisionRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "comment": {
+          "anyOf": [
+            {
+              "maxLength": 2000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Comment"
+        },
+        "decision": {
+          "$ref": "#/$defs/HumanReviewDecision"
+        }
+      },
+      "required": [
+        "decision"
+      ],
+      "title": "HumanReviewDecisionRequest",
+      "type": "object"
+    },
+    "HumanReviewReceipt": {
+      "additionalProperties": false,
+      "properties": {
+        "comment": {
+          "anyOf": [
+            {
+              "maxLength": 5000,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Comment"
+        },
+        "decidedAt": {
+          "format": "date-time",
+          "title": "Decidedat",
+          "type": "string"
+        },
+        "decision": {
+          "$ref": "#/$defs/HumanReviewDecision"
+        },
+        "decisionId": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "title": "Decisionid",
+          "type": "string"
+        },
+        "queueItemId": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "title": "Queueitemid",
+          "type": "string"
+        },
+        "remainingCount": {
+          "minimum": 0,
+          "title": "Remainingcount",
+          "type": "integer"
+        },
+        "undoExpiresAt": {
+          "format": "date-time",
+          "title": "Undoexpiresat",
+          "type": "string"
+        }
+      },
+      "required": [
+        "decisionId",
+        "queueItemId",
+        "decision",
+        "decidedAt",
+        "undoExpiresAt",
+        "remainingCount"
+      ],
+      "title": "HumanReviewReceipt",
+      "type": "object"
+    },
     "ImageMediaType": {
       "enum": [
         "image/jpeg",
@@ -922,6 +1017,165 @@
         "address"
       ],
       "title": "ResponsibleParty",
+      "type": "object"
+    },
+    "ReviewQueueImage": {
+      "additionalProperties": false,
+      "properties": {
+        "altText": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Alttext",
+          "type": "string"
+        },
+        "imageId": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "title": "Imageid",
+          "type": "string"
+        },
+        "imageUrl": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Imageurl",
+          "type": "string"
+        },
+        "panelType": {
+          "$ref": "#/$defs/LabelPanelType"
+        }
+      },
+      "required": [
+        "imageId",
+        "panelType",
+        "altText",
+        "imageUrl"
+      ],
+      "title": "ReviewQueueImage",
+      "type": "object"
+    },
+    "ReviewQueueItemDetail": {
+      "additionalProperties": false,
+      "properties": {
+        "application": {
+          "$ref": "#/$defs/ApplicationRecord"
+        },
+        "images": {
+          "items": {
+            "$ref": "#/$defs/ReviewQueueImage"
+          },
+          "title": "Images",
+          "type": "array"
+        },
+        "summary": {
+          "$ref": "#/$defs/ReviewQueueItemSummary"
+        },
+        "verification": {
+          "$ref": "#/$defs/VerificationResult"
+        }
+      },
+      "required": [
+        "summary",
+        "application",
+        "verification",
+        "images"
+      ],
+      "title": "ReviewQueueItemDetail",
+      "type": "object"
+    },
+    "ReviewQueueItemSummary": {
+      "additionalProperties": false,
+      "properties": {
+        "attentionCount": {
+          "minimum": 0,
+          "title": "Attentioncount",
+          "type": "integer"
+        },
+        "beverageType": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Beveragetype",
+          "type": "string"
+        },
+        "brandName": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Brandname",
+          "type": "string"
+        },
+        "overallStatus": {
+          "$ref": "#/$defs/OverallReviewStatus"
+        },
+        "position": {
+          "minimum": 1,
+          "title": "Position",
+          "type": "integer"
+        },
+        "queueItemId": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "title": "Queueitemid",
+          "type": "string"
+        },
+        "queuedAt": {
+          "format": "date-time",
+          "title": "Queuedat",
+          "type": "string"
+        },
+        "recordId": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "title": "Recordid",
+          "type": "string"
+        },
+        "version": {
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "queueItemId",
+        "position",
+        "recordId",
+        "brandName",
+        "beverageType",
+        "overallStatus",
+        "attentionCount",
+        "queuedAt",
+        "version"
+      ],
+      "title": "ReviewQueueItemSummary",
+      "type": "object"
+    },
+    "ReviewQueueResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "items": {
+          "items": {
+            "$ref": "#/$defs/ReviewQueueItemSummary"
+          },
+          "title": "Items",
+          "type": "array"
+        },
+        "sessionScoped": {
+          "default": true,
+          "title": "Sessionscoped",
+          "type": "boolean"
+        },
+        "totalCount": {
+          "minimum": 0,
+          "title": "Totalcount",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "items",
+        "totalCount"
+      ],
+      "title": "ReviewQueueResponse",
       "type": "object"
     },
     "RulesetReference": {
@@ -1318,8 +1572,20 @@
     "extraction": {
       "$ref": "#/$defs/OcrExtractionResult"
     },
+    "humanReviewDecisionRequest": {
+      "$ref": "#/$defs/HumanReviewDecisionRequest"
+    },
+    "humanReviewReceipt": {
+      "$ref": "#/$defs/HumanReviewReceipt"
+    },
     "result": {
       "$ref": "#/$defs/VerificationResult"
+    },
+    "reviewQueue": {
+      "$ref": "#/$defs/ReviewQueueResponse"
+    },
+    "reviewQueueItem": {
+      "$ref": "#/$defs/ReviewQueueItemDetail"
     },
     "submission": {
       "$ref": "#/$defs/VerificationSubmission"
@@ -1334,7 +1600,11 @@
     "extraction",
     "comparisonInput",
     "comparisonRequest",
-    "result"
+    "result",
+    "reviewQueue",
+    "reviewQueueItem",
+    "humanReviewDecisionRequest",
+    "humanReviewReceipt"
   ],
   "title": "VerificationContract",
   "type": "object"

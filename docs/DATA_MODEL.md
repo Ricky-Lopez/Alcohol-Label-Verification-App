@@ -153,6 +153,7 @@ In short, the three most important objects have distinct roles:
 ApplicationRecord   = what should be on the label
 OcrExtractionResult = what the system observed on the uploaded images
 VerificationResult  = how the expected and observed values compare
+HumanReviewReceipt  = the temporary human approval or rejection recorded for a queued item
 ```
 
 ### 4.3 `VerificationSubmission`

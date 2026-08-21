@@ -105,16 +105,15 @@ documents is a separate capability and must not be silently assumed.
 
 ### 4.4 Primary workflow
 
-1. The agent starts a new verification.
-2. The agent selects a preloaded synthetic application or creates an ad hoc synthetic record.
-3. The agent confirms or enters the expected core values and uploads or confirms the label image.
-4. The application validates the input and analyzes the label.
-5. The application displays a concise overall review state plus a result for every applicable
-   field.
-6. The agent compares the expected value, detected value, confidence, and image evidence.
-7. The agent uses professional judgment to resolve warnings, ambiguous matches, or unreadable
-   content outside the prototype.
-8. The agent can clear the verification and start another without stale data carrying over.
+1. The reviewer opens the preprocessed application queue in submission order.
+2. The reviewer selects an application and sees its label evidence, expected values, and comparison
+   results without re-entering application information.
+3. The reviewer uses professional judgment to approve or reject the application and may add an
+   optional comment.
+4. The item leaves the temporary queue, the next item opens, and the reviewer can undo the action
+   during the short active-session window.
+5. Manual/ad hoc input remains a secondary workflow for synthetic demonstrations or exceptional
+   intake.
 
 ## 5. P0 — Required prototype requirements
 

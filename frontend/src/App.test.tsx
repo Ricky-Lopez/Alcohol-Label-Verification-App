@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { App } from './App'
 
 const healthyService = () => new Response(JSON.stringify({ status: 'ok', service: 'alcohol-label-verification-api' }), { status: 200, headers: { 'Content-Type': 'application/json' } })
+const openApplicationInput = () => fireEvent.click(screen.getAllByRole('button', { name: 'Application Input' })[0]!)
 
 describe('App', () => {
   afterEach(() => { cleanup(); vi.unstubAllGlobals() })
@@ -11,6 +12,7 @@ describe('App', () => {
   it('shows a visible, non-blocking service state', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(healthyService()))
     render(<App />)
+    openApplicationInput()
     expect(await screen.findByText('Verification service is available.')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Expected application values' })).toBeInTheDocument()
   })
@@ -18,6 +20,7 @@ describe('App', () => {
   it('links blank required values to an error summary and moves focus there', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(healthyService()))
     render(<App />)
+    openApplicationInput()
     fireEvent.click(screen.getByRole('button', { name: 'Continue to upload label' }))
     expect(screen.getByRole('alert')).toHaveTextContent('Brand name is required.')
     expect(document.activeElement).toBe(screen.getByRole('alert'))
@@ -27,6 +30,7 @@ describe('App', () => {
   it('loads the synthetic example and reveals imported-product fields only when needed', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(healthyService()))
     render(<App />)
+    openApplicationInput()
     fireEvent.click(screen.getByRole('button', { name: 'Load synthetic example' }))
     expect(screen.getByDisplayValue('OLD TOM DISTILLERY')).toBeInTheDocument()
     expect(document.getElementById('originDisplayName')).not.toBeInTheDocument()
@@ -37,6 +41,7 @@ describe('App', () => {
   it('rejects unsupported image files before analysis', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(healthyService()))
     render(<App />)
+    openApplicationInput()
     fireEvent.click(screen.getByRole('button', { name: 'Load synthetic example' }))
     fireEvent.click(screen.getByRole('button', { name: 'Continue to upload label' }))
     const input = document.querySelector('input[type="file"]') as HTMLInputElement
@@ -55,6 +60,7 @@ describe('App', () => {
       return Promise.resolve(new Response(JSON.stringify(comparison), { status: 200, headers: { 'Content-Type': 'application/json' } }))
     }))
     render(<App />)
+    openApplicationInput()
     fireEvent.click(screen.getByRole('button', { name: 'Load synthetic example' }))
     fireEvent.click(screen.getByRole('button', { name: 'Continue to upload label' }))
     const input = document.querySelector('input[type="file"]') as HTMLInputElement
@@ -64,5 +70,12 @@ describe('App', () => {
     expect(await screen.findByRole('heading', { name: 'Review needed' })).toBeInTheDocument()
     expect(screen.getByText('Review the punctuation.')).toBeInTheDocument()
     expect(screen.getAllByText(/not a final compliance determination/i)).toHaveLength(2)
+  })
+
+  it('makes Reviewer Hub the primary home workflow', () => {
+    render(<App />)
+    expect(screen.getByRole('heading', { name: 'Choose a workspace' })).toBeInTheDocument()
+    expect(screen.getByText('Open Reviewer Hub')).toBeInTheDocument()
+    expect(screen.getByText('Side feature')).toBeInTheDocument()
   })
 })
