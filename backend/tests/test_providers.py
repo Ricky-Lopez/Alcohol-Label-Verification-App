@@ -20,6 +20,7 @@ from app.extraction.providers import (
     ProviderImageExtraction,
     ProviderObservation,
 )
+from app.rules import GOVERNMENT_WARNING_TEXT
 
 
 class FakeResponses:
@@ -105,7 +106,7 @@ async def test_openai_adapter_uses_structured_stateless_image_request() -> None:
         assert field in OCR_INSTRUCTIONS
     assert "expectedLabel" not in str(responses.arguments)
     assert "OLD TOM DISTILLERY" not in str(responses.arguments)
-    assert "According to the Surgeon General" not in str(responses.arguments)
+    assert GOVERNMENT_WARNING_TEXT not in str(responses.arguments)
     field_schema = ProviderImageExtraction.model_json_schema()["$defs"]["OcrObservationField"]
     assert set(field_schema["enum"]) == {
         "brand_name",

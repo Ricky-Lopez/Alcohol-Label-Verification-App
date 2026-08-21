@@ -105,16 +105,15 @@ documents is a separate capability and must not be silently assumed.
 
 ### 4.4 Primary workflow
 
-1. The agent starts a new verification.
-2. The agent selects a preloaded synthetic application or creates an ad hoc synthetic record.
-3. The agent confirms or enters the expected core values and uploads or confirms the label image.
-4. The application validates the input and analyzes the label.
-5. The application displays a concise overall review state plus a result for every applicable
-   field.
-6. The agent compares the expected value, detected value, confidence, and image evidence.
-7. The agent uses professional judgment to resolve warnings, ambiguous matches, or unreadable
-   content outside the prototype.
-8. The agent can clear the verification and start another without stale data carrying over.
+1. The reviewer opens the preprocessed application queue in submission order.
+2. The reviewer selects an application and sees its label evidence, expected values, and comparison
+   results without re-entering application information.
+3. The reviewer uses professional judgment to approve or reject the application and may add an
+   optional comment.
+4. The item leaves the temporary queue, the next item opens, and the reviewer can undo the action
+   during the short active-session window.
+5. Manual/ad hoc input remains a secondary workflow for synthetic demonstrations or exceptional
+   intake.
 
 ## 5. P0 — Required prototype requirements
 
@@ -133,11 +132,10 @@ documents is a separate capability and must not be silently assumed.
 - **FR-006:** The application must provide at least one complete preloaded synthetic application and
   label example for the core workflow. It must also allow an evaluator to create an ad hoc synthetic
   record without implying that manual re-entry is the intended production intake path.
-- **FR-007:** The P0 intake contract must support brand name and alcohol content where applicable.
-  The government-warning reference must come from the approved versioned ruleset, not be retyped by
-  the agent as an expected application value. Class/type and net contents must be supported for the
-  supplied distilled-spirits example; producer/address and import origin may be captured as optional
-  context until their verification rules are promoted to P1.
+- **FR-007:** The P0 intake contract must support brand name, class/type designation, net contents,
+  bottler/producer name and address, country of origin for imported products, and alcohol content
+  where applicable. The government-warning reference must come from the approved versioned ruleset,
+  not be retyped by the agent as an expected application value.
 - **FR-008:** The application must validate required form values before analysis and identify the
   specific field that needs correction. Each verification must retain a synthetic record ID, its
   intake source (`preloaded`, `ad hoc`, or later `batch`), and an unambiguous association to its
@@ -147,25 +145,36 @@ documents is a separate capability and must not be silently assumed.
 
 - **FR-009:** The application must extract readable text and relevant layout evidence from the
   uploaded label.
-- **FR-010:** The application must compare the P0 fields—brand name, alcohol content where
-  applicable, and government warning—with the corresponding expected value or approved reference
-  rather than merely displaying OCR text.
+- **FR-010:** The application must compare brand name, class/type designation, alcohol content where
+  applicable, net contents, bottler/producer name and address, country of origin for imports, and the
+  government warning with the corresponding expected value or approved reference rather than merely
+  displaying OCR text.
 - **FR-011:** Each field must receive one of these non-final review states:
   `match`, `possible match`, `mismatch`, `not found`, `not applicable`, or `unable to evaluate`.
-- **FR-012:** Brand comparison must tolerate harmless differences such as capitalization and
-  surrounding whitespace. Punctuation or other normalized differences may produce `possible
-  match`, but the original expected and detected text must remain visible for human review.
+- **FR-012:** Brand and class/type comparison must tolerate capitalization and surrounding or repeated
+  whitespace. Punctuation-only differences produce `possible match`; wording differences are
+  mismatches. The original expected and detected text must remain visible for human review.
 - **FR-013:** The application must not silently treat a normalized brand value as an exact match.
   For example, `STONE'S THROW` and `Stone's Throw` may be presented as equivalent or a possible
   match according to the documented rules, with both originals preserved.
 - **FR-014:** Alcohol-content comparison must normalize recognized equivalent representations
   where the rule is unambiguous, such as an ABV value expressed as `% Alc./Vol.`. Proof-to-ABV
-  equivalence must only be used when supported by a tested, explicit rule.
+  equivalence uses the tested rule `proof = ABV × 2`; every supplied numeric value must match exactly.
 - **FR-015:** Beverage-specific exceptions, including cases where alcohol content is not required,
   must be represented as explicit rules and result in `not applicable`, not a false pass or failure.
 - **FR-016:** The government warning text must be compared word-for-word against a versioned,
   authoritative reference supplied or approved by the product owner. Whitespace normalization may
   be applied only if documented and must not hide missing, added, reordered, or changed words.
+
+  The product-owner-approved P0 reference, versioned `2026-08-20`, is:
+
+  > GOVERNMENT WARNING: (1) ACCORDING TO THE SURGEON GENERAL, WOMEN SHOULD NOT DRINK ALCOHOLIC
+  > BEVERAGES DURING PREGNANCY BECAUSE OF THE RISK OF BIRTH DEFECTS. (2) CONSUMPTION OF ALCOHOLIC
+  > BEVERAGES IMPAIRS YOUR ABILITY TO DRIVE A CAR OR OPERATE MACHINERY, AND MAY CAUSE HEALTH
+  > PROBLEMS.
+
+  Line wrapping and runs of whitespace may be normalized for comparison; capitalization, spelling,
+  punctuation, word presence, and word order must remain exact.
 - **FR-017:** The application must separately evaluate whether the `GOVERNMENT WARNING:` heading
   is uppercase and whether visual evidence indicates that it is bold. If visual styling cannot be
   determined reliably, the result must be `unable to evaluate`; text recognition alone must not
@@ -293,8 +302,8 @@ documents is a separate capability and must not be silently assumed.
 - **P1-006:** Provide a local or self-hostable analysis option that supports the required workflow
   when outbound ML endpoints are blocked.
 - **P1-007:** Display elapsed analysis time so evaluators can verify the performance objective.
-- **P1-008:** Verify class/type, net contents, producer or bottler name and address, and country of
-  origin for imports after product owners approve their beverage-specific rules and examples.
+- **P1-008:** Extend the prototype comparison engine with approved rules for additional conditional
+  disclosures beyond the seven implemented label requirements.
 - **P1-009:** Add approved checks for warning prominence, placement, and minimum type size or route
   each unsupported visual property explicitly to manual review.
 
@@ -437,8 +446,8 @@ assessment and, at minimum:
 
 These gaps must be resolved before their related checks can be called complete:
 
-1. What authoritative, dated source and exact text define the government warning variants to be
-   tested?
+1. **Resolved for P0:** The product owner supplied the exact prototype warning reference on
+   2026-08-20. Independent regulatory provenance remains required before production use.
 2. Which beverage-specific rules and exceptions are included in the prototype, beyond the three
    emphasized checks of brand, alcohol content, and government warning?
 3. Should capitalization-only brand differences be a `match` or `possible match`, and which other

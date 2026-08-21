@@ -23,6 +23,7 @@ from app.extraction.providers import (
 from app.main import app
 from app.models.extraction import ExtractionIssueCode, ExtractionStatus
 from app.models.label import ImageMediaType, LabelImageInput, VerificationSubmission
+from app.rules import GOVERNMENT_WARNING_TEXT
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 SUBMISSION_FIXTURE_PATH = (
@@ -121,8 +122,20 @@ async def test_warning_text_remains_verbatim_and_unnormalized() -> None:
         for candidate in body["fieldCandidates"]
         if candidate["field"] == "government_warning_text"
     )
-    assert "may cause serious health problems" in warning["rawText"]
+    assert "MAY CAUSE SERIOUS HEALTH PROBLEMS" in warning["rawText"]
     assert warning["normalizedValue"] is None
+
+
+@pytest.mark.anyio
+async def test_success_mock_uses_the_versioned_warning_reference() -> None:
+    _, body = await post_extraction(scenario="success")
+
+    warning = next(
+        candidate
+        for candidate in body["fieldCandidates"]
+        if candidate["field"] == "government_warning_text"
+    )
+    assert warning["rawText"] == GOVERNMENT_WARNING_TEXT
 
 
 @pytest.mark.anyio

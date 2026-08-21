@@ -153,6 +153,7 @@ In short, the three most important objects have distinct roles:
 ApplicationRecord   = what should be on the label
 OcrExtractionResult = what the system observed on the uploaded images
 VerificationResult  = how the expected and observed values compare
+HumanReviewReceipt  = the temporary human approval or rejection recorded for a queued item
 ```
 
 ### 4.3 `VerificationSubmission`
@@ -323,9 +324,12 @@ cannot claim extracted field candidates.
 The model rejects OCR segments associated with images outside the comparison. This prevents evidence
 from one application from being attached accidentally to another.
 
-The comparison engine should use deterministic normalization and comparison code for known values.
-AI/OCR proposes detected text and regions; it does not decide whether a regulatory requirement
-passes.
+The comparison engine uses deterministic normalization and comparison code. AI/OCR proposes
+detected text and regions; it does not decide whether a regulatory requirement passes. The prototype
+compares all seven label requirements: brand, class/type, applicable alcohol content, net contents,
+bottler/producer name and address, imported-product origin, and the versioned government warning.
+Case and whitespace-only name differences match; punctuation-only name differences require review;
+numeric values must match exactly after approved conversion.
 
 ## 7. Verification result model
 
