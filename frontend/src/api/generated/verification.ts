@@ -125,6 +125,13 @@ export type Effectivedate = string;
 export type Rulesetid = string;
 export type Sourceuri = string | null;
 export type Version1 = string;
+export type Comparisonid1 = string;
+/**
+ * @minItems 1
+ * @maxItems 12
+ */
+export type Images1 = [LabelImageInput, ...LabelImageInput[]];
+export type Submissionid1 = string;
 export type Completedat = string;
 export type Decisionsupportonly = true;
 export type Durationms1 = number;
@@ -150,14 +157,8 @@ export type OverallReviewStatus = "no_discrepancies_found" | "review_needed" | "
 export type Recordid1 = string;
 export type Schemaversion1 = "1.0";
 export type Startedat = string;
-export type Submissionid1 = string;
-export type Verificationid = string;
-/**
- * @minItems 1
- * @maxItems 12
- */
-export type Images1 = [LabelImageInput, ...LabelImageInput[]];
 export type Submissionid2 = string;
+export type Verificationid = string;
 export type Applicationpart = "submission";
 export type Encoding = "multipart/form-data";
 export type Filepart = "images";
@@ -167,6 +168,7 @@ export type Filepart = "images";
  */
 export interface VerificationContract {
   comparisonInput: ComparisonInput;
+  comparisonRequest: ComparisonRequest;
   extraction: OcrExtractionResult;
   result: VerificationResult;
   submission: VerificationSubmission;
@@ -290,6 +292,19 @@ export interface RulesetReference {
   sourceUri?: Sourceuri;
   version: Version1;
 }
+/**
+ * Public comparison request; the API selects the approved ruleset server-side.
+ */
+export interface ComparisonRequest {
+  comparisonId: Comparisonid1;
+  extraction: OcrExtractionResult;
+  submission: VerificationSubmission;
+}
+export interface VerificationSubmission {
+  application: ApplicationRecord;
+  images: Images1;
+  submissionId: Submissionid1;
+}
 export interface VerificationResult {
   completedAt: Completedat;
   decisionSupportOnly?: Decisionsupportonly;
@@ -301,7 +316,7 @@ export interface VerificationResult {
   ruleset: RulesetReference;
   schemaVersion?: Schemaversion1;
   startedAt: Startedat;
-  submissionId: Submissionid1;
+  submissionId: Submissionid2;
   verificationId: Verificationid;
 }
 export interface VerificationFinding {
@@ -325,11 +340,6 @@ export interface EvidenceReference {
   imageId: Imageid2;
   region?: BoundingPolygon | null;
   segmentIds?: Segmentids;
-}
-export interface VerificationSubmission {
-  application: ApplicationRecord;
-  images: Images1;
-  submissionId: Submissionid2;
 }
 /**
  * Documents the multipart boundary without embedding image bytes in JSON.

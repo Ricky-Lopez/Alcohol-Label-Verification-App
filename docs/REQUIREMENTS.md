@@ -133,11 +133,10 @@ documents is a separate capability and must not be silently assumed.
 - **FR-006:** The application must provide at least one complete preloaded synthetic application and
   label example for the core workflow. It must also allow an evaluator to create an ad hoc synthetic
   record without implying that manual re-entry is the intended production intake path.
-- **FR-007:** The P0 intake contract must support brand name and alcohol content where applicable.
-  The government-warning reference must come from the approved versioned ruleset, not be retyped by
-  the agent as an expected application value. Class/type and net contents must be supported for the
-  supplied distilled-spirits example; producer/address and import origin may be captured as optional
-  context until their verification rules are promoted to P1.
+- **FR-007:** The P0 intake contract must support brand name, class/type designation, net contents,
+  bottler/producer name and address, country of origin for imported products, and alcohol content
+  where applicable. The government-warning reference must come from the approved versioned ruleset,
+  not be retyped by the agent as an expected application value.
 - **FR-008:** The application must validate required form values before analysis and identify the
   specific field that needs correction. Each verification must retain a synthetic record ID, its
   intake source (`preloaded`, `ad hoc`, or later `batch`), and an unambiguous association to its
@@ -147,20 +146,21 @@ documents is a separate capability and must not be silently assumed.
 
 - **FR-009:** The application must extract readable text and relevant layout evidence from the
   uploaded label.
-- **FR-010:** The application must compare the P0 fields—brand name, alcohol content where
-  applicable, and government warning—with the corresponding expected value or approved reference
-  rather than merely displaying OCR text.
+- **FR-010:** The application must compare brand name, class/type designation, alcohol content where
+  applicable, net contents, bottler/producer name and address, country of origin for imports, and the
+  government warning with the corresponding expected value or approved reference rather than merely
+  displaying OCR text.
 - **FR-011:** Each field must receive one of these non-final review states:
   `match`, `possible match`, `mismatch`, `not found`, `not applicable`, or `unable to evaluate`.
-- **FR-012:** Brand comparison must tolerate harmless differences such as capitalization and
-  surrounding whitespace. Punctuation or other normalized differences may produce `possible
-  match`, but the original expected and detected text must remain visible for human review.
+- **FR-012:** Brand and class/type comparison must tolerate capitalization and surrounding or repeated
+  whitespace. Punctuation-only differences produce `possible match`; wording differences are
+  mismatches. The original expected and detected text must remain visible for human review.
 - **FR-013:** The application must not silently treat a normalized brand value as an exact match.
   For example, `STONE'S THROW` and `Stone's Throw` may be presented as equivalent or a possible
   match according to the documented rules, with both originals preserved.
 - **FR-014:** Alcohol-content comparison must normalize recognized equivalent representations
   where the rule is unambiguous, such as an ABV value expressed as `% Alc./Vol.`. Proof-to-ABV
-  equivalence must only be used when supported by a tested, explicit rule.
+  equivalence uses the tested rule `proof = ABV × 2`; every supplied numeric value must match exactly.
 - **FR-015:** Beverage-specific exceptions, including cases where alcohol content is not required,
   must be represented as explicit rules and result in `not applicable`, not a false pass or failure.
 - **FR-016:** The government warning text must be compared word-for-word against a versioned,
@@ -303,8 +303,8 @@ documents is a separate capability and must not be silently assumed.
 - **P1-006:** Provide a local or self-hostable analysis option that supports the required workflow
   when outbound ML endpoints are blocked.
 - **P1-007:** Display elapsed analysis time so evaluators can verify the performance objective.
-- **P1-008:** Verify class/type, net contents, producer or bottler name and address, and country of
-  origin for imports after product owners approve their beverage-specific rules and examples.
+- **P1-008:** Extend the prototype comparison engine with approved rules for additional conditional
+  disclosures beyond the seven implemented label requirements.
 - **P1-009:** Add approved checks for warning prominence, placement, and minimum type size or route
   each unsupported visual property explicitly to manual review.
 

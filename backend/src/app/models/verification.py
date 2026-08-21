@@ -18,7 +18,7 @@ from app.models.extraction import (
     OcrExtractionResult,
     VerificationField,
 )
-from app.models.label import ApplicationRecord, LabelImageInput
+from app.models.label import ApplicationRecord, LabelImageInput, VerificationSubmission
 
 
 class VerificationOutcome(StrEnum):
@@ -75,6 +75,24 @@ class ComparisonInput(ContractModel):
         extraction_image_ids = {segment.image_id for segment in self.extraction.segments}
         if not extraction_image_ids.issubset(image_ids):
             raise ValueError("OCR segments reference images outside the comparison input")
+        return self
+
+
+class ComparisonRequest(ContractModel):
+    """Public comparison request; the API selects the approved ruleset server-side."""
+
+    comparison_id: Identifier
+    submission: VerificationSubmission
+    extraction: OcrExtractionResult
+
+    @model_validator(mode="after")
+    def validate_submission_correlation(self) -> "ComparisonRequest":
+        if self.extraction.submission_id != self.submission.submission_id:
+            raise ValueError("extraction submissionId must match the comparison submission")
+        image_ids = {image.client_image_id for image in self.submission.images}
+        segment_image_ids = {segment.image_id for segment in self.extraction.segments}
+        if not segment_image_ids.issubset(image_ids):
+            raise ValueError("OCR segments reference images outside the comparison submission")
         return self
 
 

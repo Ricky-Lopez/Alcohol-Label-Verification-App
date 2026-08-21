@@ -151,6 +151,32 @@
       "title": "ComparisonInput",
       "type": "object"
     },
+    "ComparisonRequest": {
+      "additionalProperties": false,
+      "description": "Public comparison request; the API selects the approved ruleset server-side.",
+      "properties": {
+        "comparisonId": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "title": "Comparisonid",
+          "type": "string"
+        },
+        "extraction": {
+          "$ref": "#/$defs/OcrExtractionResult"
+        },
+        "submission": {
+          "$ref": "#/$defs/VerificationSubmission"
+        }
+      },
+      "required": [
+        "comparisonId",
+        "submission",
+        "extraction"
+      ],
+      "title": "ComparisonRequest",
+      "type": "object"
+    },
     "ComparisonValue": {
       "additionalProperties": false,
       "properties": {
@@ -1286,6 +1312,9 @@
     "comparisonInput": {
       "$ref": "#/$defs/ComparisonInput"
     },
+    "comparisonRequest": {
+      "$ref": "#/$defs/ComparisonRequest"
+    },
     "extraction": {
       "$ref": "#/$defs/OcrExtractionResult"
     },
@@ -1304,6 +1333,7 @@
     "submissionTransport",
     "extraction",
     "comparisonInput",
+    "comparisonRequest",
     "result"
   ],
   "title": "VerificationContract",

@@ -3,6 +3,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
+from app.api.comparisons import router as comparison_router
 from app.api.extractions import router as extraction_router
 from app.api.health import router as health_router
 from app.config import get_settings
@@ -15,6 +16,7 @@ app = FastAPI(
 )
 app.include_router(health_router)
 app.include_router(extraction_router)
+app.include_router(comparison_router)
 
 
 def mount_frontend(frontend_dist_dir: Path) -> None:

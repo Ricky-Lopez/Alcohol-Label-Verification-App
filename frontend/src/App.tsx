@@ -6,12 +6,14 @@ import {
   type MockScenario,
   type PendingLabelImage
 } from './api/extractions'
+import { requestComparison, type ComparisonApiOutcome } from './api/comparisons'
 import type {
   ApplicationRecord,
   BeverageType,
   LabelPanelType,
   NetContentsUnit,
   OcrExtractionResult,
+  VerificationResult,
   VerificationField,
   VerificationSubmission
 } from './api/generated/verification'
@@ -42,6 +44,8 @@ type WorkflowState = {
   image: PendingLabelImage | null
   errors: Record<string, string>
   outcome: ExtractionApiOutcome | null
+  submission: VerificationSubmission | null
+  comparison: ComparisonApiOutcome | null
   isSubmitting: boolean
   mockScenario: MockScenario
 }
@@ -53,6 +57,8 @@ type WorkflowAction =
   | { type: 'set-errors'; errors: Record<string, string> }
   | { type: 'set-step'; step: ReviewStep }
   | { type: 'set-outcome'; outcome: ExtractionApiOutcome | null }
+  | { type: 'set-submission'; submission: VerificationSubmission | null }
+  | { type: 'set-comparison'; comparison: ComparisonApiOutcome | null }
   | { type: 'set-submitting'; isSubmitting: boolean }
   | { type: 'set-mock-scenario'; scenario: MockScenario }
   | { type: 'load-example' }
@@ -62,7 +68,7 @@ const blankValues = (): FormValues => ({
   beverageType: 'distilled_spirits', brandName: '', classTypeDesignation: '', netContentsValue: '', netContentsUnit: 'mL', abvPercent: '', proof: '', responsiblePartyName: '', city: '', region: '', countryCode: 'US', imported: false, originCountryCode: '', originDisplayName: ''
 })
 
-const initialState = (): WorkflowState => ({ step: 'expected-values', values: blankValues(), image: null, errors: {}, outcome: null, isSubmitting: false, mockScenario: 'success' })
+const initialState = (): WorkflowState => ({ step: 'expected-values', values: blankValues(), image: null, errors: {}, outcome: null, submission: null, comparison: null, isSubmitting: false, mockScenario: 'success' })
 
 const valuesFromExample = (): FormValues => {
   const expected = exampleApplication.expectedLabel
@@ -78,6 +84,8 @@ const workflowReducer = (state: WorkflowState, action: WorkflowAction): Workflow
     case 'set-errors': return { ...state, errors: action.errors }
     case 'set-step': return { ...state, step: action.step, errors: {} }
     case 'set-outcome': return { ...state, outcome: action.outcome }
+    case 'set-submission': return { ...state, submission: action.submission }
+    case 'set-comparison': return { ...state, comparison: action.comparison }
     case 'set-submitting': return { ...state, isSubmitting: action.isSubmitting }
     case 'set-mock-scenario': return { ...state, mockScenario: action.scenario }
     case 'load-example': return { ...state, values: valuesFromExample(), errors: {} }
@@ -165,11 +173,19 @@ export const App = () => {
     const errors = validateExpectedValues(state.values); if (!state.image) errors.image = 'Upload one label image before verifying.'
     if (Object.keys(errors).length) { dispatch({ type: 'set-errors', errors }); dispatch({ type: 'set-step', step: state.image ? 'expected-values' : 'upload-label' }); return }
     if (!state.image) return
-    dispatch({ type: 'set-submitting', isSubmitting: true }); dispatch({ type: 'set-outcome', outcome: null })
-    const outcome = await requestExtraction(buildSubmission(state.values, state.image), state.image, mockControlsEnabled ? { mockScenario: state.mockScenario } : {})
+    const submission = buildSubmission(state.values, state.image)
+    dispatch({ type: 'set-submitting', isSubmitting: true }); dispatch({ type: 'set-outcome', outcome: null }); dispatch({ type: 'set-comparison', comparison: null }); dispatch({ type: 'set-submission', submission })
+    const outcome = await requestExtraction(submission, state.image, mockControlsEnabled ? { mockScenario: state.mockScenario } : {})
     dispatch({ type: 'set-submitting', isSubmitting: false }); dispatch({ type: 'set-outcome', outcome })
     if (outcome.kind === 'validation-error') { dispatch({ type: 'set-errors', errors: { image: outcome.message } }); dispatch({ type: 'set-step', step: 'upload-label' }); return }
+    if (outcome.kind === 'completed') dispatch({ type: 'set-comparison', comparison: await requestComparison(submission, outcome.result) })
     dispatch({ type: 'set-step', step: 'review-extraction' })
+  }
+  const retryComparison = async () => {
+    if (!state.submission || state.outcome?.kind !== 'completed') return
+    dispatch({ type: 'set-submitting', isSubmitting: true })
+    dispatch({ type: 'set-comparison', comparison: await requestComparison(state.submission, state.outcome.result) })
+    dispatch({ type: 'set-submitting', isSubmitting: false })
   }
   const startNew = () => { if (state.image) URL.revokeObjectURL(state.image.previewUrl); dispatch({ type: 'start-new' }); if (fileInputRef.current) fileInputRef.current.value = '' }
   const removeImage = () => { if (state.image) URL.revokeObjectURL(state.image.previewUrl); dispatch({ type: 'set-image', image: null }); if (fileInputRef.current) fileInputRef.current.value = '' }
@@ -177,11 +193,11 @@ export const App = () => {
   return <main className="app-shell">
     <header className="app-header"><p className="eyebrow">Decision-support prototype</p><h1>Alcohol Label Verification</h1><p className="lede">Review one synthetic or public label at a time. Results assist review and are not a final compliance determination.</p></header>
     <section className={`service-banner service-banner--${serviceState}`} aria-live="polite"><p>{serviceMessage}</p>{serviceState === 'error' && <button type="button" className="secondary-button" onClick={() => void checkService()}>Try again</button>}</section>
-    <ol className="step-list" aria-label="Review steps">{['Expected values', 'Upload label', 'Review extraction'].map((label, index) => <li key={label} aria-current={index === currentStepIndex ? 'step' : undefined} className={index <= currentStepIndex ? 'step--active' : ''}><span>{index + 1}</span>{label}</li>)}</ol>
+    <ol className="step-list" aria-label="Review steps">{['Expected values', 'Upload label', 'Review results'].map((label, index) => <li key={label} aria-current={index === currentStepIndex ? 'step' : undefined} className={index <= currentStepIndex ? 'step--active' : ''}><span>{index + 1}</span>{label}</li>)}</ol>
     {Object.values(state.errors).some(Boolean) && <div className="error-summary" role="alert" tabIndex={-1} ref={errorSummaryRef}><h2>Review the highlighted information</h2><ul>{Object.entries(state.errors).filter(([, message]) => message).map(([field, message]) => <li key={field}><a href={`#${field}`}>{message}</a></li>)}</ul></div>}
     {state.step === 'expected-values' && <ExpectedValues values={state.values} errors={state.errors} updateValue={updateValue} loadExample={() => dispatch({ type: 'load-example' })} onContinue={goToUpload} />}
     {state.step === 'upload-label' && <UploadLabel image={state.image} errors={state.errors} fileInputRef={fileInputRef} onSelectImage={selectImage} onPanelChange={(panelType) => dispatch({ type: 'set-panel', panelType })} mockScenario={state.mockScenario} onMockScenario={(scenario) => dispatch({ type: 'set-mock-scenario', scenario })} onBack={() => dispatch({ type: 'set-step', step: 'expected-values' })} onSubmit={() => void submit()} isSubmitting={state.isSubmitting} onRemove={removeImage} />}
-    {state.step === 'review-extraction' && state.outcome && <ExtractionReview outcome={state.outcome} image={state.image} onRetry={() => void submit()} onBack={() => dispatch({ type: 'set-step', step: 'upload-label' })} onStartNew={startNew} isSubmitting={state.isSubmitting} />}
+    {state.step === 'review-extraction' && state.outcome && <ExtractionReview outcome={state.outcome} comparison={state.comparison} image={state.image} onRetry={() => void submit()} onRetryComparison={() => void retryComparison()} onBack={() => dispatch({ type: 'set-step', step: 'upload-label' })} onStartNew={startNew} isSubmitting={state.isSubmitting} />}
   </main>
 }
 
@@ -192,11 +208,20 @@ const ExpectedValues = ({ values, errors, updateValue, loadExample, onContinue }
 
 const UploadLabel = ({ image, errors, fileInputRef, onSelectImage, onPanelChange, mockScenario, onMockScenario, onBack, onSubmit, isSubmitting, onRemove }: { image: PendingLabelImage | null; errors: Record<string, string>; fileInputRef: React.RefObject<HTMLInputElement | null>; onSelectImage: (file: File | undefined) => void; onPanelChange: (panel: LabelPanelType) => void; mockScenario: MockScenario; onMockScenario: (scenario: MockScenario) => void; onBack: () => void; onSubmit: () => void; isSubmitting: boolean; onRemove: () => void }) => <section className="workflow-card" aria-labelledby="upload-label-title"><p className="step-caption">Step 2 of 3</p><h2 id="upload-label-title">Upload label image</h2><p>Choose one JPEG or PNG label image up to 20 MB. The image is processed in memory and is not saved by this prototype.</p><input ref={fileInputRef} id="image" className="visually-hidden" type="file" accept="image/jpeg,image/png" aria-invalid={Boolean(errors.image)} aria-describedby={errors.image ? errorId('image') : undefined} onChange={(event) => onSelectImage(event.target.files?.[0])} /><label className="drop-zone" htmlFor="image" onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); onSelectImage(event.dataTransfer.files[0]) }}><strong>Choose a label image</strong><span>or drag and drop a JPEG or PNG here</span></label>{errors.image && <p className="field-error" id={errorId('image')}>{errors.image}</p>}{image && <div className="image-details"><img src={image.previewUrl} alt={`Preview of selected label image: ${image.metadata.fileName}`} /><div><h3>{image.metadata.fileName}</h3><p>{formatBytes(image.metadata.sizeBytes)}</p><Field label="Label panel" field="panelType"><select id="panelType" value={image.metadata.panelType} onChange={(event) => onPanelChange(event.target.value as LabelPanelType)}><option value="unknown">Unknown</option><option value="brand">Brand panel</option><option value="back">Back panel</option><option value="side">Side panel</option><option value="neck">Neck panel</option><option value="other">Other panel</option></select></Field><button type="button" className="secondary-button" onClick={onRemove}>Remove image</button></div></div>}{mockControlsEnabled && <Field label="Mock OCR scenario (development only)" field="mockScenario"><select id="mockScenario" value={mockScenario} onChange={(event) => onMockScenario(event.target.value as MockScenario)}>{mockScenarios.map((scenario) => <option key={scenario.value} value={scenario.value}>{scenario.label}</option>)}</select></Field>}<div className="actions"><button type="button" className="secondary-button" onClick={onBack}>Back</button><button type="button" disabled={isSubmitting || !image} onClick={onSubmit}>{isSubmitting ? 'Analyzing label…' : 'Verify label'}</button></div></section>
 
-const ExtractionReview = ({ outcome, image, onRetry, onBack, onStartNew, isSubmitting }: { outcome: ExtractionApiOutcome; image: PendingLabelImage | null; onRetry: () => void; onBack: () => void; onStartNew: () => void; isSubmitting: boolean }) => {
+const statusLabel: Record<VerificationResult['overallStatus'], string> = {
+  no_discrepancies_found: 'No discrepancies found',
+  review_needed: 'Review needed',
+  analysis_incomplete: 'Analysis incomplete'
+}
+
+const ExtractionReview = ({ outcome, comparison, image, onRetry, onRetryComparison, onBack, onStartNew, isSubmitting }: { outcome: ExtractionApiOutcome; comparison: ComparisonApiOutcome | null; image: PendingLabelImage | null; onRetry: () => void; onRetryComparison: () => void; onBack: () => void; onStartNew: () => void; isSubmitting: boolean }) => {
   if (outcome.kind === 'network-error') return <section className="workflow-card" aria-live="polite"><p className="step-caption">Step 3 of 3</p><h2>Analysis could not start</h2><p>{outcome.message}</p><div className="actions"><button type="button" className="secondary-button" onClick={onBack}>Back to upload</button><button type="button" disabled={isSubmitting} onClick={onRetry}>Try again</button></div></section>
   if (outcome.kind === 'validation-error') return null
+  if (comparison?.kind === 'completed') return <VerificationReview result={comparison.result} image={image} onBack={onBack} onStartNew={onStartNew} />
   const result = outcome.result
   const candidates = result.fieldCandidates ?? []
   const issues = result.issues ?? []
-  return <section className="workflow-card extraction-review" aria-live="polite"><p className="step-caption">Step 3 of 3</p><h2>{resultHeading(result)}</h2><p className="result-disclaimer">These are OCR observations for human review. They have not been compared with regulatory expectations.</p>{outcome.kind === 'provider-failure' && <p className="provider-notice">The analysis service was unavailable or timed out. Any observations below may be incomplete.</p>}{image && <div className="review-image"><img src={image.previewUrl} alt={`Uploaded label: ${image.metadata.fileName}`} /><p>Image: {image.metadata.fileName}</p></div>}<p className="record-reference">Submission: {result.submissionId}</p><h3>Observed label fields</h3>{candidates.length ? <dl className="candidate-list">{candidates.map((candidate) => <div key={`${candidate.field}-${candidate.rawText}`}><dt>{fieldLabels[candidate.field]}</dt><dd className={candidate.field === 'government_warning_text' ? 'verbatim-text' : undefined}>{candidate.rawText}</dd></div>)}</dl> : <p>No reliable label fields were observed.</p>}<h3>Review notes</h3>{issues.length ? <ul className="issue-list">{issues.map((issue, index) => <li key={`${issue.code}-${index}`}><strong>{issue.field ? fieldLabels[issue.field] : 'Image review'}:</strong> {issue.message}</li>)}</ul> : <p>No extraction issues were reported.</p>}<div className="actions"><button type="button" className="secondary-button" onClick={onBack}>Back to upload</button>{(outcome.kind === 'provider-failure' || result.status !== 'succeeded') && <button type="button" disabled={isSubmitting} onClick={onRetry}>{isSubmitting ? 'Retrying…' : 'Try again'}</button>}<button type="button" className="secondary-button" onClick={onStartNew}>Start new review</button></div></section>
+  return <section className="workflow-card extraction-review" aria-live="polite"><p className="step-caption">Step 3 of 3</p><h2>{resultHeading(result)}</h2><p className="result-disclaimer">OCR observations could not yet be compared with the approved label requirements.</p>{comparison && <p className="provider-notice">{comparison.message}</p>}{outcome.kind === 'provider-failure' && <p className="provider-notice">The analysis service was unavailable or timed out. Any observations below may be incomplete.</p>}{image && <div className="review-image"><img src={image.previewUrl} alt={`Uploaded label: ${image.metadata.fileName}`} /><p>Image: {image.metadata.fileName}</p></div>}<p className="record-reference">Submission: {result.submissionId}</p><h3>Observed label fields</h3>{candidates.length ? <dl className="candidate-list">{candidates.map((candidate) => <div key={`${candidate.field}-${candidate.rawText}`}><dt>{fieldLabels[candidate.field]}</dt><dd className={candidate.field === 'government_warning_text' ? 'verbatim-text' : undefined}>{candidate.rawText}</dd></div>)}</dl> : <p>No reliable label fields were observed.</p>}<h3>Review notes</h3>{issues.length ? <ul className="issue-list">{issues.map((issue, index) => <li key={`${issue.code}-${index}`}><strong>{issue.field ? fieldLabels[issue.field] : 'Image review'}:</strong> {issue.message}</li>)}</ul> : <p>No extraction issues were reported.</p>}<div className="actions"><button type="button" className="secondary-button" onClick={onBack}>Back to upload</button>{comparison && <button type="button" disabled={isSubmitting} onClick={onRetryComparison}>{isSubmitting ? 'Retrying…' : 'Retry comparison'}</button>}{(outcome.kind === 'provider-failure' || result.status !== 'succeeded') && <button type="button" disabled={isSubmitting} onClick={onRetry}>{isSubmitting ? 'Retrying…' : 'Try again'}</button>}<button type="button" className="secondary-button" onClick={onStartNew}>Start new review</button></div></section>
 }
+
+const VerificationReview = ({ result, image, onBack, onStartNew }: { result: VerificationResult; image: PendingLabelImage | null; onBack: () => void; onStartNew: () => void }) => <section className="workflow-card extraction-review" aria-live="polite"><p className="step-caption">Step 3 of 3</p><h2>{statusLabel[result.overallStatus]}</h2><p className="result-disclaimer">These results assist human review and are not a final compliance determination.</p>{image && <div className="review-image"><img src={image.previewUrl} alt={`Uploaded label: ${image.metadata.fileName}`} /><p>Image: {image.metadata.fileName}</p></div>}<p className="record-reference">Record: {result.recordId}<br />Submission: {result.submissionId}<br />Ruleset: {result.ruleset.rulesetId} {result.ruleset.version}</p><h3>Label requirement findings</h3><div className="finding-list">{result.findings.map((finding, index) => <article className={`finding finding--${finding.severity}`} key={`${finding.field}-${finding.ruleId}-${index}`}><h4><span aria-hidden="true">{finding.outcome === 'match' || finding.outcome === 'not_applicable' ? '✓' : finding.outcome === 'mismatch' || finding.outcome === 'not_found' ? '!' : '?'}</span> {fieldLabels[finding.field]}: {finding.outcome.replaceAll('_', ' ')}</h4><p>{finding.explanation}</p>{finding.expected && <p><strong>Expected:</strong> {finding.expected.displayValue}</p>}{finding.detected?.length ? <div><strong>Detected:</strong><ul>{finding.detected.map((value, valueIndex) => <li className={finding.field === 'government_warning_text' ? 'verbatim-text' : undefined} key={`${value.displayValue}-${valueIndex}`}>{value.displayValue}</li>)}</ul></div> : null}{finding.evidence?.length ? <p><strong>Evidence:</strong> {finding.evidence.map((evidence) => evidence.excerpt).filter(Boolean).join(' | ')}</p> : null}</article>)}</div><div className="actions"><button type="button" className="secondary-button" onClick={onBack}>Back to upload</button><button type="button" className="secondary-button" onClick={onStartNew}>Start new review</button></div></section>
