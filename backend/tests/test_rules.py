@@ -1,0 +1,25 @@
+from datetime import date
+
+from app.rules import (
+    GOVERNMENT_WARNING_HEADING,
+    GOVERNMENT_WARNING_TEXT,
+    PROTOTYPE_RULESET_EFFECTIVE_DATE,
+    PROTOTYPE_RULESET_ID,
+    PROTOTYPE_RULESET_VERSION,
+)
+
+
+def test_prototype_government_warning_reference_is_exact() -> None:
+    assert GOVERNMENT_WARNING_TEXT == (
+        "GOVERNMENT WARNING: (1) ACCORDING TO THE SURGEON GENERAL, WOMEN SHOULD NOT "
+        "DRINK ALCOHOLIC BEVERAGES DURING PREGNANCY BECAUSE OF THE RISK OF BIRTH DEFECTS. "
+        "(2) CONSUMPTION OF ALCOHOLIC BEVERAGES IMPAIRS YOUR ABILITY TO DRIVE A CAR OR "
+        "OPERATE MACHINERY, AND MAY CAUSE HEALTH PROBLEMS."
+    )
+    assert GOVERNMENT_WARNING_HEADING == "GOVERNMENT WARNING:"
+
+
+def test_prototype_ruleset_has_stable_version_metadata() -> None:
+    assert PROTOTYPE_RULESET_ID == "alcohol-label-prototype"
+    assert PROTOTYPE_RULESET_VERSION == "2026-08-20"
+    assert date(2026, 8, 20) == PROTOTYPE_RULESET_EFFECTIVE_DATE

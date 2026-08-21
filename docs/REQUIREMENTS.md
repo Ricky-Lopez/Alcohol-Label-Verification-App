@@ -166,6 +166,16 @@ documents is a separate capability and must not be silently assumed.
 - **FR-016:** The government warning text must be compared word-for-word against a versioned,
   authoritative reference supplied or approved by the product owner. Whitespace normalization may
   be applied only if documented and must not hide missing, added, reordered, or changed words.
+
+  The product-owner-approved P0 reference, versioned `2026-08-20`, is:
+
+  > GOVERNMENT WARNING: (1) ACCORDING TO THE SURGEON GENERAL, WOMEN SHOULD NOT DRINK ALCOHOLIC
+  > BEVERAGES DURING PREGNANCY BECAUSE OF THE RISK OF BIRTH DEFECTS. (2) CONSUMPTION OF ALCOHOLIC
+  > BEVERAGES IMPAIRS YOUR ABILITY TO DRIVE A CAR OR OPERATE MACHINERY, AND MAY CAUSE HEALTH
+  > PROBLEMS.
+
+  Line wrapping and runs of whitespace may be normalized for comparison; capitalization, spelling,
+  punctuation, word presence, and word order must remain exact.
 - **FR-017:** The application must separately evaluate whether the `GOVERNMENT WARNING:` heading
   is uppercase and whether visual evidence indicates that it is bold. If visual styling cannot be
   determined reliably, the result must be `unable to evaluate`; text recognition alone must not
@@ -437,8 +447,8 @@ assessment and, at minimum:
 
 These gaps must be resolved before their related checks can be called complete:
 
-1. What authoritative, dated source and exact text define the government warning variants to be
-   tested?
+1. **Resolved for P0:** The product owner supplied the exact prototype warning reference on
+   2026-08-20. Independent regulatory provenance remains required before production use.
 2. Which beverage-specific rules and exceptions are included in the prototype, beyond the three
    emphasized checks of brand, alcohol content, and government warning?
 3. Should capitalization-only brand differences be a `match` or `possible match`, and which other

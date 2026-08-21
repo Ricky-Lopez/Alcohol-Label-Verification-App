@@ -15,6 +15,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_valida
 
 from app.extraction.image_processing import PreparedImage
 from app.models.extraction import ExtractorReference
+from app.rules import GOVERNMENT_WARNING_TEXT
 
 OCR_ADAPTER_VERSION = "1.1.0"
 OCR_INSTRUCTIONS = """You extract observable text from one alcohol-label image.
@@ -288,19 +289,14 @@ class MockOcrExtractor:
                 warning_text_incomplete=False,
             )
 
-        warning = (
-            "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink "
-            "alcoholic beverages during pregnancy because of the risk of birth defects. (2) "
-            "Consumption of alcoholic beverages impairs your ability to drive a car or operate "
-            "machinery, and may cause health problems."
-        )
+        warning = GOVERNMENT_WARNING_TEXT
         if selected == MockScenario.WARNING_MISMATCH:
             warning = warning.replace(
-                "may cause health problems", "may cause serious health problems"
+                "MAY CAUSE HEALTH PROBLEMS", "MAY CAUSE SERIOUS HEALTH PROBLEMS"
             )
         if selected == MockScenario.WARNING_INCOMPLETE:
             warning = (
-                "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not..."
+                "GOVERNMENT WARNING: (1) ACCORDING TO THE SURGEON GENERAL, WOMEN SHOULD NOT..."
             )
 
         uncertain = selected in {
