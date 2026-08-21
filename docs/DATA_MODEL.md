@@ -237,6 +237,9 @@ objects are nested as follows:
 │   ├── version
 │   └── modelVersion (optional)
 ├── durationMs
+├── timing: <strong><em><u>ExtractionTiming</u></em></strong>
+│   ├── imagePreparationMs
+│   └── providerMs
 ├── segments: <strong><em><u>TextSegment[]</u></em></strong>
 │   ├── segmentId
 │   ├── imageId ──► LabelImageInput.clientImageId
@@ -279,15 +282,17 @@ The OCR adapter returns engine-neutral data:
 - extraction and submission identifiers;
 - `succeeded`, `partial`, or `failed` status;
 - extractor, software version, and optional model version;
-- analysis duration;
+- total server analysis duration, plus image-preparation and provider timing;
 - raw text segments with confidence and normalized polygons;
 - field candidates that point to their supporting segment identifiers; and
 - safe issue codes for low confidence, unreadable images, unsupported layouts, timeout, or provider
   unavailability.
 
 OpenAI vision does not supply calibrated OCR confidence or guaranteed bounding geometry. Those
-properties are therefore nullable and must never be fabricated. The provider-specific response
-uses segment indexes; the adapter validates them and assigns the public segment identifiers.
+properties are therefore nullable and must never be fabricated. The compact provider-specific
+response returns each field observation once. The adapter creates a matching text segment and
+candidate, then assigns their public evidence identifiers. This avoids asking the model to repeat
+the same text in both provider segments and candidates.
 
 Government-warning candidates preserve the visible wording in `rawText` and leave
 `normalizedValue` null. OCR is instructed not to correct, complete, paraphrase, or normalize the

@@ -29,7 +29,7 @@ export type MockScenario =
   | 'timeout'
   | 'provider_unavailable'
 
-const REQUEST_TIMEOUT_MS = 10_000
+const REQUEST_TIMEOUT_MS = 40_000
 
 const isExtractionResult = (value: unknown): value is OcrExtractionResult => {
   if (typeof value !== 'object' || value === null) {
@@ -37,10 +37,17 @@ const isExtractionResult = (value: unknown): value is OcrExtractionResult => {
   }
 
   const candidate = value as Record<string, unknown>
+  const timing = candidate.timing
   return (
     typeof candidate.extractionId === 'string' &&
     typeof candidate.submissionId === 'string' &&
     typeof candidate.status === 'string' &&
+    typeof candidate.durationMs === 'number' &&
+    typeof timing === 'object' &&
+    timing !== null &&
+    typeof (timing as Record<string, unknown>).imagePreparationMs === 'number' &&
+    typeof (timing as Record<string, unknown>).providerMs === 'number' &&
+    Array.isArray(candidate.segments) &&
     Array.isArray(candidate.fieldCandidates) &&
     Array.isArray(candidate.issues)
   )

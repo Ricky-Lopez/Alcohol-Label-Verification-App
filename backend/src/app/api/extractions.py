@@ -1,3 +1,4 @@
+from time import perf_counter
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, UploadFile
@@ -34,6 +35,7 @@ async def create_extraction(
         Header(alias="X-OCR-Mock-Scenario"),
     ] = None,
 ) -> OcrExtractionResult | JSONResponse:
+    request_started = perf_counter()
     if settings.ocr_provider != "mock" and mock_scenario is not None:
         raise HTTPException(
             status_code=422,
@@ -50,6 +52,7 @@ async def create_extraction(
             detail="The number of uploaded images does not match the submission metadata.",
         )
 
+    preparation_started = perf_counter()
     prepared_images = []
     for metadata, upload in zip(submission.images, images, strict=True):
         data = await upload.read(MAX_UPLOAD_BYTES + 1)
@@ -65,12 +68,15 @@ async def create_extraction(
             )
         except InvalidImageError as error:
             raise HTTPException(status_code=422, detail=str(error)) from error
+    image_preparation_ms = round((perf_counter() - preparation_started) * 1000)
 
     service_response = await run_extraction(
         extractor=extractor,
         submission_id=submission.submission_id,
         images=prepared_images,
         scenario=mock_scenario,
+        request_started=request_started,
+        image_preparation_ms=image_preparation_ms,
     )
     if service_response.http_status != 200:
         return JSONResponse(

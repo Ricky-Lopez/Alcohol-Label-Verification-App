@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     openai_api_key: SecretStr | None = None
     openai_ocr_model: str = "gpt-4o-mini"
     openai_image_detail: Literal["low", "high", "auto"] = "high"
-    openai_ocr_timeout_seconds: Annotated[float, Field(gt=0, le=30)] = 4.0
+    openai_ocr_timeout_seconds: Annotated[float, Field(gt=0, le=30)] = 30.0
     frontend_dist_dir: Path = REPOSITORY_ROOT / "frontend" / "dist"
 
     model_config = SettingsConfigDict(

@@ -1,4 +1,5 @@
 import asyncio
+from collections.abc import Callable
 from dataclasses import dataclass
 from time import perf_counter
 from uuid import uuid4
@@ -20,6 +21,7 @@ from app.models.extraction import (
     ExtractionIssue,
     ExtractionIssueCode,
     ExtractionStatus,
+    ExtractionTiming,
     OcrExtractionResult,
     TextSegment,
     VerificationField,
@@ -129,36 +131,35 @@ def _map_provider_result(
         )
 
     segment_ids = [
-        f"segment-{image_index + 1}-{segment_index + 1}"
-        for segment_index in range(len(provider_result.segments))
+        f"segment-{image_index + 1}-{observation_index + 1}"
+        for observation_index in range(len(provider_result.observations))
     ]
     segments = [
         TextSegment(
             segment_id=segment_id,
             image_id=image.client_image_id,
-            raw_text=provider_segment.raw_text,
+            raw_text=observation.raw_text,
         )
-        for segment_id, provider_segment in zip(segment_ids, provider_result.segments, strict=True)
+        for segment_id, observation in zip(segment_ids, provider_result.observations, strict=True)
     ]
     candidates: list[ExtractedFieldCandidate] = []
-    for provider_candidate in provider_result.field_candidates:
-        if provider_candidate.uncertain:
+    for segment_id, observation in zip(segment_ids, provider_result.observations, strict=True):
+        field = VerificationField(observation.field.value)
+        if observation.uncertain:
             issues.append(
                 ExtractionIssue(
                     code=ExtractionIssueCode.LOW_CONFIDENCE,
                     message="The extracted field is uncertain and requires review.",
                     image_id=image.client_image_id,
-                    field=provider_candidate.field,
+                    field=field,
                 )
             )
         candidates.append(
             ExtractedFieldCandidate(
-                field=provider_candidate.field,
-                raw_text=provider_candidate.raw_text,
-                normalized_value=provider_candidate.normalized_value,
-                evidence_segment_ids=[
-                    segment_ids[index] for index in provider_candidate.evidence_segment_indexes
-                ],
+                field=field,
+                raw_text=observation.raw_text,
+                normalized_value=observation.normalized_value,
+                evidence_segment_ids=[segment_id],
             )
         )
 
@@ -179,18 +180,23 @@ async def run_extraction(
     submission_id: str,
     images: list[PreparedImage],
     scenario: MockScenario | None = None,
+    request_started: float | None = None,
+    image_preparation_ms: int = 0,
+    clock: Callable[[], float] = perf_counter,
 ) -> ExtractionServiceResponse:
-    started = perf_counter()
+    started = request_started if request_started is not None else clock()
     semaphore = asyncio.Semaphore(MAX_CONCURRENT_EXTRACTIONS)
 
     async def extract_one(image: PreparedImage) -> ProviderImageExtraction:
         async with semaphore:
             return await extractor.extract_image(image, scenario=scenario)
 
+    provider_started = clock()
     attempts = await asyncio.gather(
         *(extract_one(image) for image in images),
         return_exceptions=True,
     )
+    provider_ms = round((clock() - provider_started) * 1000)
 
     segments: list[TextSegment] = []
     candidates: list[ExtractedFieldCandidate] = []
@@ -239,7 +245,11 @@ async def run_extraction(
         submission_id=submission_id,
         status=extraction_status,
         extractor=extractor.reference,
-        duration_ms=round((perf_counter() - started) * 1000),
+        duration_ms=round((clock() - started) * 1000),
+        timing=ExtractionTiming(
+            image_preparation_ms=image_preparation_ms,
+            provider_ms=provider_ms,
+        ),
         segments=segments,
         field_candidates=candidates if extraction_status != ExtractionStatus.FAILED else [],
         issues=issues,

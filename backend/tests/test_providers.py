@@ -3,18 +3,22 @@ from typing import Any
 
 import httpx
 import pytest
-from openai import APITimeoutError
+from openai import APIConnectionError, APITimeoutError, RateLimitError
+from pydantic import ValidationError
 
 from app.extraction.image_processing import PreparedImage
 from app.extraction.providers import (
     OCR_INSTRUCTIONS,
     ExtractorInvalidResponseError,
+    ExtractorRateLimitError,
     ExtractorRefusedError,
     ExtractorTimeoutError,
+    ExtractorUnavailableError,
     ImageClassification,
+    OcrObservationField,
     OpenAiOcrExtractor,
     ProviderImageExtraction,
-    ProviderTextSegment,
+    ProviderObservation,
 )
 
 
@@ -57,8 +61,14 @@ def completed_response(parsed: ProviderImageExtraction) -> SimpleNamespace:
 async def test_openai_adapter_uses_structured_stateless_image_request() -> None:
     parsed = ProviderImageExtraction(
         classification=ImageClassification.ALCOHOL_LABEL,
-        segments=[ProviderTextSegment(raw_text="GOVERNMENT WARNING:")],
-        field_candidates=[],
+        observations=[
+            ProviderObservation(
+                field=OcrObservationField.GOVERNMENT_WARNING_TEXT,
+                raw_text="GOVERNMENT WARNING:",
+                normalized_value=None,
+                uncertain=False,
+            )
+        ],
         warning_text_incomplete=False,
     )
     responses = FakeResponses(response=completed_response(parsed))
@@ -75,13 +85,93 @@ async def test_openai_adapter_uses_structured_stateless_image_request() -> None:
     assert result == parsed
     assert responses.arguments["text_format"] is ProviderImageExtraction
     assert responses.arguments["store"] is False
-    assert responses.arguments["max_output_tokens"] == 4_000
+    assert responses.arguments["max_output_tokens"] == 2_000
     image_input = responses.arguments["input"][0]["content"][1]
     assert image_input["detail"] == "high"
     assert image_input["image_url"].startswith("data:image/png;base64,")
-    assert "Never infer, correct, complete, paraphrase" in OCR_INSTRUCTIONS
+    assert "Never infer, correct, complete, compare, paraphrase" in OCR_INSTRUCTIONS
+    for field in (
+        "brand_name",
+        "class_type_designation",
+        "alcohol_content",
+        "net_contents",
+        "responsible_party_name",
+        "responsible_party_address",
+        "country_of_origin",
+        "government_warning_text",
+        "government_warning_heading_case",
+        "government_warning_heading_weight",
+    ):
+        assert field in OCR_INSTRUCTIONS
     assert "expectedLabel" not in str(responses.arguments)
     assert "OLD TOM DISTILLERY" not in str(responses.arguments)
+    assert "According to the Surgeon General" not in str(responses.arguments)
+    field_schema = ProviderImageExtraction.model_json_schema()["$defs"]["OcrObservationField"]
+    assert set(field_schema["enum"]) == {
+        "brand_name",
+        "class_type_designation",
+        "alcohol_content",
+        "net_contents",
+        "responsible_party_name",
+        "responsible_party_address",
+        "country_of_origin",
+        "government_warning_text",
+        "government_warning_heading_case",
+        "government_warning_heading_weight",
+    }
+
+
+def test_provider_observations_allow_missing_uncertain_and_duplicate_fields() -> None:
+    observations = [
+        ProviderObservation(
+            field=OcrObservationField.BRAND_NAME,
+            raw_text="FIRST BRAND",
+            normalized_value=None,
+            uncertain=False,
+        ),
+        ProviderObservation(
+            field=OcrObservationField.BRAND_NAME,
+            raw_text="SECOND BRAND",
+            normalized_value=None,
+            uncertain=True,
+        ),
+        ProviderObservation(
+            field=OcrObservationField.GOVERNMENT_WARNING_HEADING_WEIGHT,
+            raw_text="GOVERNMENT WARNING:",
+            normalized_value=None,
+            uncertain=True,
+        ),
+    ]
+
+    result = ProviderImageExtraction(
+        classification=ImageClassification.UNCERTAIN,
+        observations=observations,
+        warning_text_incomplete=False,
+    )
+
+    assert result.observations == observations
+
+
+@pytest.mark.parametrize(
+    ("field", "normalized_value"),
+    [
+        (OcrObservationField.BRAND_NAME.value, "normalized brand"),
+        (OcrObservationField.GOVERNMENT_WARNING_TEXT.value, "normalized warning"),
+        (OcrObservationField.GOVERNMENT_WARNING_HEADING_CASE.value, "mixed_case"),
+        ("appellation_of_origin", None),
+    ],
+)
+def test_provider_observations_reject_out_of_scope_or_malformed_values(
+    field: str,
+    normalized_value: str | None,
+) -> None:
+    with pytest.raises(ValidationError):
+        ProviderObservation(
+            field=field,
+            raw_text="visible text",
+            normalized_value=normalized_value,
+            uncertain=False,
+        )
 
 
 @pytest.mark.anyio
@@ -96,6 +186,45 @@ async def test_openai_adapter_maps_timeout() -> None:
     )
 
     with pytest.raises(ExtractorTimeoutError):
+        await extractor.extract_image(prepared_image())
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize(
+    ("provider_error", "expected_error"),
+    [
+        (
+            APIConnectionError(
+                request=httpx.Request("POST", "https://api.openai.com/v1/responses")
+            ),
+            ExtractorUnavailableError,
+        ),
+        (
+            RateLimitError(
+                "rate limited",
+                response=httpx.Response(
+                    429,
+                    request=httpx.Request("POST", "https://api.openai.com/v1/responses"),
+                ),
+                body=None,
+            ),
+            ExtractorRateLimitError,
+        ),
+    ],
+)
+async def test_openai_adapter_maps_connection_and_rate_limit_errors(
+    provider_error: Exception,
+    expected_error: type[Exception],
+) -> None:
+    extractor = OpenAiOcrExtractor(
+        api_key="test-key",
+        model="gpt-4o-mini",
+        image_detail="high",
+        timeout_seconds=4,
+        client=FakeClient(FakeResponses(error=provider_error)),  # type: ignore[arg-type]
+    )
+
+    with pytest.raises(expected_error):
         await extractor.extract_image(prepared_image())
 
 

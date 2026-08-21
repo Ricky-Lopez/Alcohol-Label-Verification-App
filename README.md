@@ -34,7 +34,7 @@ committed. The application recognizes these variables:
 | `OPENAI_API_KEY` | For live OCR | Server-side credential for the OpenAI Responses API |
 | `OPENAI_OCR_MODEL` | No | Vision model; defaults to `gpt-4o-mini` |
 | `OPENAI_IMAGE_DETAIL` | No | OpenAI image detail; defaults to `high` |
-| `OPENAI_OCR_TIMEOUT_SECONDS` | No | Per-image timeout; defaults to `4` seconds |
+| `OPENAI_OCR_TIMEOUT_SECONDS` | No | Per-image timeout; defaults to `30` seconds |
 | `VITE_ENABLE_OCR_MOCK_CONTROLS` | No | Set to `true` only for local mock-OCR scenario controls; it is bundled into the browser and must not contain secrets |
 
 Never place a real OpenAI API key in source files, documentation, browser bundles, Docker images,
@@ -50,6 +50,26 @@ For keyless local or frontend testing, set `APP_ENVIRONMENT=test` and `OCR_PROVI
 mock-only `X-OCR-Mock-Scenario` header accepts the scenario names documented in
 `fixtures/extractions/mock-scenarios.json`. The header is rejected when the OpenAI provider is
 active, and mock mode cannot start in production.
+
+The extraction result reports total server processing in `durationMs`, with image validation and
+compression separated from provider execution in `timing.imagePreparationMs` and
+`timing.providerMs`. Framework multipart parsing occurs before the route handler and is therefore
+not included. The live benchmark measures the local image-preparation and provider path directly,
+without HTTP multipart overhead.
+
+To benchmark a synthetic or public label against the configured live provider, set
+`OCR_PROVIDER=openai` and `OPENAI_API_KEY`, then run:
+
+```bash
+cd backend
+uv run python -m app.extraction.benchmark --image ../path/to/synthetic-label.jpg --runs 1
+```
+
+The opt-in command makes paid API requests. It reports image size reduction, processed dimensions,
+and preparation/provider/total timing without printing image content, extracted text, prompts,
+credentials, or provider responses. On failure, it reports only a safe category such as `timeout`,
+`rate_limit`, or `invalid_structured_response`. Increase `--runs` only when repeated paid
+measurements are intentional.
 
 Install and start the API:
 
