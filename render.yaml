@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: alcohol-label-verification-app
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: APP_ENVIRONMENT
+        value: production
+      - key: OCR_PROVIDER
+        value: openai
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_OCR_MODEL
+        value: gpt-4o-mini
+      - key: OPENAI_IMAGE_DETAIL
+        value: high
+      - key: OPENAI_OCR_TIMEOUT_SECONDS
+        value: "4"

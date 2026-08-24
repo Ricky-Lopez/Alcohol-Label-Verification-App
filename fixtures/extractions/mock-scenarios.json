@@ -1,0 +1,44 @@
+[
+  {
+    "scenario": "success",
+    "httpStatus": 200,
+    "extractionStatus": "succeeded",
+    "issueCode": null
+  },
+  {
+    "scenario": "warning_mismatch",
+    "httpStatus": 200,
+    "extractionStatus": "succeeded",
+    "issueCode": null
+  },
+  {
+    "scenario": "warning_incomplete",
+    "httpStatus": 200,
+    "extractionStatus": "partial",
+    "issueCode": "warning_text_incomplete"
+  },
+  {
+    "scenario": "not_label",
+    "httpStatus": 200,
+    "extractionStatus": "failed",
+    "issueCode": "not_label_image"
+  },
+  {
+    "scenario": "uncertain_label",
+    "httpStatus": 200,
+    "extractionStatus": "partial",
+    "issueCode": "label_classification_uncertain"
+  },
+  {
+    "scenario": "timeout",
+    "httpStatus": 504,
+    "extractionStatus": "failed",
+    "issueCode": "extractor_timeout"
+  },
+  {
+    "scenario": "provider_unavailable",
+    "httpStatus": 502,
+    "extractionStatus": "failed",
+    "issueCode": "extractor_unavailable"
+  }
+]

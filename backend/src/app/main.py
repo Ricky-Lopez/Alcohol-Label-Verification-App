@@ -1,0 +1,31 @@
+from pathlib import Path
+
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+
+from app.api.batches import router as batch_router
+from app.api.comparisons import router as comparison_router
+from app.api.extractions import router as extraction_router
+from app.api.health import router as health_router
+from app.api.review_queue import router as review_queue_router
+from app.config import get_settings
+
+app = FastAPI(
+    title="Alcohol Label Verification API",
+    version="0.1.0",
+    docs_url="/api/docs",
+    openapi_url="/api/openapi.json",
+)
+app.include_router(health_router)
+app.include_router(extraction_router)
+app.include_router(comparison_router)
+app.include_router(review_queue_router)
+app.include_router(batch_router)
+
+
+def mount_frontend(frontend_dist_dir: Path) -> None:
+    if frontend_dist_dir.is_dir():
+        app.mount("/", StaticFiles(directory=frontend_dist_dir, html=True), name="frontend")
+
+
+mount_frontend(get_settings().frontend_dist_dir)
