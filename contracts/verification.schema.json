@@ -84,6 +84,355 @@
       "title": "ApplicationRecord",
       "type": "object"
     },
+    "BatchDetail": {
+      "additionalProperties": false,
+      "properties": {
+        "batchId": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "title": "Batchid",
+          "type": "string"
+        },
+        "completedAt": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Completedat"
+        },
+        "createdAt": {
+          "format": "date-time",
+          "title": "Createdat",
+          "type": "string"
+        },
+        "failedCount": {
+          "minimum": 0,
+          "title": "Failedcount",
+          "type": "integer"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/$defs/BatchItemSummary"
+          },
+          "title": "Items",
+          "type": "array"
+        },
+        "processedCount": {
+          "minimum": 0,
+          "title": "Processedcount",
+          "type": "integer"
+        },
+        "readyCount": {
+          "minimum": 0,
+          "title": "Readycount",
+          "type": "integer"
+        },
+        "sessionScoped": {
+          "default": true,
+          "title": "Sessionscoped",
+          "type": "boolean"
+        },
+        "skippedCount": {
+          "minimum": 0,
+          "title": "Skippedcount",
+          "type": "integer"
+        },
+        "status": {
+          "$ref": "#/$defs/BatchStatus"
+        },
+        "totalCount": {
+          "maximum": 200,
+          "minimum": 1,
+          "title": "Totalcount",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "batchId",
+        "status",
+        "totalCount",
+        "processedCount",
+        "readyCount",
+        "failedCount",
+        "skippedCount",
+        "createdAt",
+        "items"
+      ],
+      "title": "BatchDetail",
+      "type": "object"
+    },
+    "BatchImageDeclaration": {
+      "additionalProperties": false,
+      "properties": {
+        "filename": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Filename",
+          "type": "string"
+        },
+        "mediaType": {
+          "$ref": "#/$defs/ImageMediaType"
+        },
+        "sizeBytes": {
+          "exclusiveMinimum": 0,
+          "maximum": 20000000,
+          "title": "Sizebytes",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "filename",
+        "mediaType",
+        "sizeBytes"
+      ],
+      "title": "BatchImageDeclaration",
+      "type": "object"
+    },
+    "BatchImageManifest": {
+      "additionalProperties": false,
+      "properties": {
+        "images": {
+          "items": {
+            "$ref": "#/$defs/BatchImageDeclaration"
+          },
+          "maxItems": 200,
+          "minItems": 1,
+          "title": "Images",
+          "type": "array"
+        }
+      },
+      "required": [
+        "images"
+      ],
+      "title": "BatchImageManifest",
+      "type": "object"
+    },
+    "BatchItemStatus": {
+      "enum": [
+        "pending",
+        "processing",
+        "ready_for_review",
+        "failed",
+        "skipped"
+      ],
+      "title": "BatchItemStatus",
+      "type": "string"
+    },
+    "BatchItemSummary": {
+      "additionalProperties": false,
+      "properties": {
+        "batchItemId": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "title": "Batchitemid",
+          "type": "string"
+        },
+        "brandName": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Brandname",
+          "type": "string"
+        },
+        "durationMs": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Durationms"
+        },
+        "errorCode": {
+          "anyOf": [
+            {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Errorcode"
+        },
+        "errorMessage": {
+          "anyOf": [
+            {
+              "maxLength": 255,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Errormessage"
+        },
+        "filename": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Filename",
+          "type": "string"
+        },
+        "overallStatus": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/OverallReviewStatus"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "queueItemId": {
+          "anyOf": [
+            {
+              "maxLength": 100,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Queueitemid"
+        },
+        "recordId": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "title": "Recordid",
+          "type": "string"
+        },
+        "retryable": {
+          "default": false,
+          "title": "Retryable",
+          "type": "boolean"
+        },
+        "rowNumber": {
+          "minimum": 2,
+          "title": "Rownumber",
+          "type": "integer"
+        },
+        "status": {
+          "$ref": "#/$defs/BatchItemStatus"
+        }
+      },
+      "required": [
+        "batchItemId",
+        "rowNumber",
+        "filename",
+        "recordId",
+        "brandName",
+        "status"
+      ],
+      "title": "BatchItemSummary",
+      "type": "object"
+    },
+    "BatchStatus": {
+      "enum": [
+        "processing",
+        "paused",
+        "completed",
+        "completed_with_errors"
+      ],
+      "title": "BatchStatus",
+      "type": "string"
+    },
+    "BatchValidationIssue": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "title": "Code",
+          "type": "string"
+        },
+        "field": {
+          "anyOf": [
+            {
+              "maxLength": 255,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Field"
+        },
+        "message": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Message",
+          "type": "string"
+        },
+        "row": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Row"
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "title": "BatchValidationIssue",
+      "type": "object"
+    },
+    "BatchValidationResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "issues": {
+          "items": {
+            "$ref": "#/$defs/BatchValidationIssue"
+          },
+          "minItems": 1,
+          "title": "Issues",
+          "type": "array"
+        },
+        "message": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Message",
+          "type": "string"
+        }
+      },
+      "required": [
+        "message",
+        "issues"
+      ],
+      "title": "BatchValidationResponse",
+      "type": "object"
+    },
     "BeverageType": {
       "enum": [
         "beer",
@@ -1580,6 +1929,15 @@
   "additionalProperties": false,
   "description": "Schema bundle used to generate frontend boundary types.",
   "properties": {
+    "batch": {
+      "$ref": "#/$defs/BatchDetail"
+    },
+    "batchImageManifest": {
+      "$ref": "#/$defs/BatchImageManifest"
+    },
+    "batchValidationResponse": {
+      "$ref": "#/$defs/BatchValidationResponse"
+    },
     "comparisonInput": {
       "$ref": "#/$defs/ComparisonInput"
     },
@@ -1625,7 +1983,10 @@
     "reviewQueueCreateRequest",
     "reviewQueueItem",
     "humanReviewDecisionRequest",
-    "humanReviewReceipt"
+    "humanReviewReceipt",
+    "batchImageManifest",
+    "batch",
+    "batchValidationResponse"
   ],
   "title": "VerificationContract",
   "type": "object"

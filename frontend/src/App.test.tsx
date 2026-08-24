@@ -5,7 +5,7 @@ import { App } from './App'
 import { exampleApplication } from './exampleApplication'
 
 const healthyService = () => new Response(JSON.stringify({ status: 'ok', service: 'alcohol-label-verification-api' }), { status: 200, headers: { 'Content-Type': 'application/json' } })
-const openApplicationInput = () => fireEvent.click(screen.getAllByRole('button', { name: 'Application Input' })[0]!)
+const openApplicationInput = () => fireEvent.click(screen.getAllByRole('button', { name: 'Single Application Input' })[0]!)
 
 describe('App', () => {
   afterEach(() => { cleanup(); vi.unstubAllGlobals() })
@@ -85,6 +85,10 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Review this application now' }))
     expect(await screen.findByRole('heading', { name: 'OLD TOM DISTILLERY' })).toBeInTheDocument()
     expect(screen.getByText('Submitted label image')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Reviewer Hub' }))
+    expect(await screen.findByRole('heading', { name: 'Reviewer Hub' })).toBeInTheDocument()
+    expect(screen.getByText('1 applications in queue')).toBeInTheDocument()
   })
 
   it('makes Reviewer Hub the primary home workflow', () => {

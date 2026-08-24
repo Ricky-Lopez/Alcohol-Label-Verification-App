@@ -378,7 +378,24 @@ and extractor versions, all field findings, timezone-aware timestamps, and measu
 The model prevents `no_discrepancies_found` from containing a mismatch, possible match, missing field,
 or unable-to-evaluate finding.
 
-## 8. Regulatory and scope boundaries
+## 8. Batch intake model
+
+`BatchImageManifest` declares the exact filename, media type, and byte size of every image selected
+with a CSV. The server validates the complete CSV-to-image association before creating a batch.
+Each accepted row becomes a canonical `ApplicationRecord` with `intakeSource: batch`, a one-image
+`VerificationSubmission`, and a reserved Reviewer Hub position.
+
+`BatchDetail` is the authoritative, session-scoped processing snapshot. Its ordered
+`BatchItemSummary` objects move through `pending`, `processing`, `ready_for_review`, `failed`, or
+`skipped`. A ready item records its automated `overallStatus` and `queueItemId`; a failed item keeps
+only a safe error code/message and retryability indicator. Aggregate counts drive the accessible
+progress display without requiring the frontend to infer state from completed HTTP calls.
+
+The browser transfers matched images individually with bounded concurrency. The backend performs
+image preparation, OCR, deterministic comparison, and queue insertion for each item. Queue
+positions are reserved before processing so asynchronous completion cannot reorder the CSV rows.
+
+## 9. Regulatory and scope boundaries
 
 The contract can represent generally required and conditional label data, but it is not itself a
 complete regulatory rules engine. In particular:
@@ -400,7 +417,7 @@ Reference material used to establish field coverage:
 
 Product owners must approve the dated ruleset before the prototype represents any check as complete.
 
-## 9. Contract evolution
+## 10. Contract evolution
 
 To change a boundary type:
 

@@ -1,0 +1,3 @@
+record_id,filename,beverage_type,brand_name,class_type_designation,net_contents_value,net_contents_unit,alcohol_by_volume_percent,proof,producer_name,producer_city,producer_region,producer_country_code,imported,origin_country_code,origin_display_name
+batch-example-old-tom-01,01-old-tom-distillery.png,distilled_spirits,OLD TOM DISTILLERY,Kentucky Straight Bourbon Whiskey,750,mL,45,90,Example Distilling Company,Frankfort,KY,US,false,,
+batch-example-meadowlark-02,02-meadowlark-rye.png,distilled_spirits,MEADOWLARK RYE,Straight Rye Whiskey,750,mL,47,94,Meadowlark Spirits,Lexington,KY,US,false,,
