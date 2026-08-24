@@ -24,4 +24,40 @@ describe('ReviewerHub', () => {
     expect(screen.getByRole('button', { name: 'Approve application' })).toBeInTheDocument()
     expect(screen.getByText(/Use ← and →/)).toBeInTheDocument()
   })
+
+  it('falls back to the current queue when a previously selected item is stale', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      if (String(input) === '/api/review-queue') {
+        return Promise.resolve(new Response(JSON.stringify(queue), { status: 200, headers: { 'Content-Type': 'application/json' } }))
+      }
+      return Promise.resolve(new Response(JSON.stringify({ detail: 'Not found' }), { status: 404, headers: { 'Content-Type': 'application/json' } }))
+    }))
+
+    render(<ReviewerHub onHome={vi.fn()} initialQueueItemId="expired-item" />)
+
+    expect(await screen.findByText('FIRST BRAND')).toBeInTheDocument()
+    expect(screen.getByText('The previously selected application is no longer available. Showing the current queue.')).toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
+  it('refreshes the queue when an item disappears between list and detail requests', async () => {
+    let queueRequests = 0
+    const refreshedQueue = { ...queue, totalCount: 2, items: queue.items.slice(1) }
+    vi.stubGlobal('fetch', vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      if (String(input) === '/api/review-queue') {
+        queueRequests += 1
+        const responseBody = queueRequests === 1 ? queue : refreshedQueue
+        return Promise.resolve(new Response(JSON.stringify(responseBody), { status: 200, headers: { 'Content-Type': 'application/json' } }))
+      }
+      return Promise.resolve(new Response(JSON.stringify({ detail: 'Not found' }), { status: 404, headers: { 'Content-Type': 'application/json' } }))
+    }))
+
+    render(<ReviewerHub onHome={vi.fn()} initialQueueItemId="item-1" />)
+
+    expect(await screen.findByText('2 applications in queue')).toBeInTheDocument()
+    expect(screen.queryByText('FIRST BRAND')).not.toBeInTheDocument()
+    expect(screen.getByText('The previously selected application is no longer available. Showing the current queue.')).toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(queueRequests).toBe(2)
+  })
 })

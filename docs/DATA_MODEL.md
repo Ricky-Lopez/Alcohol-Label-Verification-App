@@ -401,7 +401,8 @@ The contract can represent generally required and conditional label data, but it
 complete regulatory rules engine. In particular:
 
 - exact health-warning text, heading capitalization, boldness, type size, prominence, and placement
-  belong to a dated ruleset;
+  belong to a dated ruleset; the prototype automates text and capitalization while retaining
+  boldness for human visual review;
 - distilled-spirits same-field-of-vision requirements need multi-region image evidence;
 - alcohol-content applicability differs among beverage categories and circumstances;
 - wine appellation and disclosure requirements are conditional;
