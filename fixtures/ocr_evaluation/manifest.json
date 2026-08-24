@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1.0",
+  "description": "Deterministic synthetic OCR evaluation corpus. Each case changes one label condition only.",
+  "cases": [
+    {"id": "clear-old-tom", "image": "01-clear-old-tom.png", "expectedOutcome": "no_discrepancies_found", "brandName": "OLD TOM DISTILLERY", "classTypeDesignation": "Kentucky Straight Bourbon Whiskey", "abvPercent": 45, "proof": 90, "businessName": "Example Distilling Company", "city": "Frankfort"},
+    {"id": "clear-meadowlark", "image": "02-clear-meadowlark.png", "expectedOutcome": "no_discrepancies_found", "brandName": "MEADOWLARK RYE", "classTypeDesignation": "Straight Rye Whiskey", "abvPercent": 47, "proof": 94, "businessName": "Meadowlark Spirits", "city": "Lexington"},
+    {"id": "brand-mismatch", "image": "03-brand-mismatch.png", "expectedOutcome": "review_needed", "brandName": "STONE'S THROW", "classTypeDesignation": "Kentucky Straight Bourbon Whiskey", "abvPercent": 45, "proof": 90, "businessName": "Example Distilling Company", "city": "Frankfort"},
+    {"id": "abv-mismatch", "image": "04-abv-mismatch.png", "expectedOutcome": "review_needed", "brandName": "RIVERBEND BOURBON", "classTypeDesignation": "Kentucky Straight Bourbon Whiskey", "abvPercent": 45, "proof": 90, "businessName": "Example Distilling Company", "city": "Frankfort"},
+    {"id": "warning-incomplete", "image": "05-warning-incomplete.png", "expectedOutcome": "analysis_incomplete", "brandName": "HARVEST MOON SPIRITS", "classTypeDesignation": "Kentucky Straight Bourbon Whiskey", "abvPercent": 45, "proof": 90, "businessName": "Example Distilling Company", "city": "Frankfort"},
+    {"id": "warning-ambiguous", "image": "06-warning-ambiguous.png", "expectedOutcome": "analysis_incomplete", "brandName": "CEDAR RIDGE WHISKEY", "classTypeDesignation": "Kentucky Straight Bourbon Whiskey", "abvPercent": 45, "proof": 90, "businessName": "Example Distilling Company", "city": "Frankfort"}
+  ]
+}

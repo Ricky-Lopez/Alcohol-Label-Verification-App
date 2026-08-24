@@ -37,6 +37,8 @@ async def test_queue_lists_seeded_items_and_returns_details() -> None:
         image = await client.get("/api/review-queue/queue-item-1/images/queue-image-1")
 
     assert [item["position"] for item in response.json()["items"]] == [1, 2, 3, 4, 5, 6]
+    assert response.json()["items"][2]["brandName"] == "STONE THROW"
+    assert response.json()["items"][2]["overallStatus"] == "no_discrepancies_found"
     assert detail.json()["application"]["intakeSource"] == "batch"
     assert detail.json()["verification"]["decisionSupportOnly"] is True
     assert image.headers["content-type"].startswith("image/png")

@@ -91,6 +91,9 @@ async def test_openai_adapter_uses_structured_stateless_image_request() -> None:
     assert image_input["detail"] == "high"
     assert image_input["image_url"].startswith("data:image/png;base64,")
     assert "Never infer, correct, complete, compare, paraphrase" in OCR_INSTRUCTIONS
+    assert "complete visible brand-name lockup" in OCR_INSTRUCTIONS
+    assert "Never drop a word merely because it also looks like a" in OCR_INSTRUCTIONS
+    assert "product descriptor or business term" in OCR_INSTRUCTIONS
     for field in (
         "brand_name",
         "class_type_designation",

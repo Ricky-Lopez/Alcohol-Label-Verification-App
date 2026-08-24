@@ -10,3 +10,22 @@ generated image will be added when the upload and extraction slice is implemente
 HTTP statuses, extraction statuses, and primary issue codes. Backend route tests consume this file,
 and future frontend browser tests can use the same scenario names through the mock-only
 `X-OCR-Mock-Scenario` header.
+
+`ocr_evaluation/` is a deterministic synthetic corpus for opt-in live OCR evaluation. The PNGs are
+generated from `generate_labels.py`; its manifest records each expected application and intended
+comparison category. The complete warning text is software-rendered rather than AI-rendered, so
+spelling and punctuation are controlled. Run it only with `OCR_PROVIDER=openai`:
+
+```bash
+cd backend
+OCR_PROVIDER=openai uv run python -m app.extraction.evaluation \
+  --fixture-dir ../fixtures/ocr_evaluation
+```
+
+The command reports statuses and timing metrics without printing extracted label text or provider
+responses. The current five-minute OCR timeout is temporary for this optimization work and must be
+reduced after measurements establish an interactive production target.
+
+`reviewer_queue/` contains the synthetic, preprocessed examples displayed by the Reviewer Hub.
+Five use the full approved warning text; Harvest Moon deliberately uses an incomplete warning as the
+intentional warning-failure case.

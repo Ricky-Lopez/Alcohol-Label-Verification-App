@@ -247,7 +247,7 @@ def seed_queue(clock: Callable[[], datetime] = _now) -> list[QueueRecord]:
                 "city": "Lexington",
             },
         ),
-        ("STONE'S THROW", "text_mismatch", "03-stones-throw.png", {}),
+        ("STONE THROW", "clear", "03-stones-throw.png", {}),
         ("RIVERBEND BOURBON", "numeric_mismatch", "04-riverbend-bourbon.png", {}),
         ("HARVEST MOON SPIRITS", "warning_incomplete", "05-harvest-moon-spirits.png", {}),
         ("CEDAR RIDGE WHISKEY", "uncertain", "06-cedar-ridge-whiskey.png", {}),
