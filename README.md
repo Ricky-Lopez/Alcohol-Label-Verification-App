@@ -98,7 +98,7 @@ optional comment may accompany either decision. The active queue—including lab
 single-reviewer and temporary: it resets when the API restarts. A decision removes an item and
 offers a ten-second undo action.
 
-## Ad-hoc application input
+## Single application input
 
 The browser prototype supports one synthetic or public label image per ad-hoc review. Enter the
 expected application values (or select **Load synthetic example**), upload a JPEG or PNG, then
@@ -107,6 +107,20 @@ automatically to the Reviewer Hub, and **Review this application now** opens tha
 directly. The upload UI does not ask for a label-panel classification; ad-hoc images use the neutral
 `unknown` metadata value. This is a side feature for synthetic demonstrations or exceptional intake,
 rather than the operational reviewer workflow.
+
+## Batch application input
+
+**Batch Application Input** accepts one UTF-8 CSV manifest and up to 200 matching JPEG or PNG
+label images. Download the template from the batch screen, populate one row per application, and
+use the exact image basename in each row's `filename` column. The complete manifest is validated
+before OCR begins. Images are then uploaded individually with at most three analyses running at
+once; each completed OCR and deterministic comparison result is added immediately to the Reviewer
+Hub in CSV order.
+
+If an item fails, new work pauses while already-running requests finish. Retry each failed item or
+explicitly skip it to continue. Skipped applications remain in the downloadable batch report but
+do not enter the Reviewer Hub. The dashboard and queue are temporary and reset when the backend
+restarts; unfinished browser files must be selected again after a page reload.
 
 For local mock demonstrations, run the backend with `APP_ENVIRONMENT=test` and `OCR_PROVIDER=mock`,
 then set `VITE_ENABLE_OCR_MOCK_CONTROLS=true` before starting Vite. This exposes only deterministic

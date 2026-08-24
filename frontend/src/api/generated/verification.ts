@@ -5,6 +5,46 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
+export type Batchid = string;
+export type Completedat = string | null;
+export type Createdat = string;
+export type Failedcount = number;
+export type Batchitemid = string;
+export type Brandname = string;
+export type Durationms = number | null;
+export type Errorcode = string | null;
+export type Errormessage = string | null;
+export type Filename = string;
+export type OverallReviewStatus = "no_discrepancies_found" | "review_needed" | "analysis_incomplete";
+export type Queueitemid = string | null;
+export type Recordid = string;
+export type Retryable = boolean;
+export type Rownumber = number;
+export type BatchItemStatus = "pending" | "processing" | "ready_for_review" | "failed" | "skipped";
+export type Items = BatchItemSummary[];
+export type Processedcount = number;
+export type Readycount = number;
+export type Sessionscoped = boolean;
+export type Skippedcount = number;
+export type BatchStatus = "processing" | "paused" | "completed" | "completed_with_errors";
+export type Totalcount = number;
+/**
+ * @minItems 1
+ * @maxItems 200
+ */
+export type Images = [BatchImageDeclaration, ...BatchImageDeclaration[]];
+export type Filename1 = string;
+export type ImageMediaType = "image/jpeg" | "image/png";
+export type Sizebytes = number;
+/**
+ * @minItems 1
+ */
+export type Issues = [BatchValidationIssue, ...BatchValidationIssue[]];
+export type Code = string;
+export type Field = string | null;
+export type Message = string;
+export type Row = number | null;
+export type Message1 = string;
 export type BeverageType = "beer" | "wine" | "distilled_spirits";
 export type Expectedtext = string;
 export type Rulereference = string | null;
@@ -21,7 +61,7 @@ export type Abvpercent = number;
 export type Expecteddisplaytext = string | null;
 export type Proof = number | null;
 export type Appellationoforigin = string | null;
-export type Brandname = string;
+export type Brandname1 = string;
 export type Classtypedesignation = string;
 export type Countrycode = string;
 export type Displayname = string;
@@ -44,10 +84,10 @@ export type Name = string;
 export type Statementprefix = string | null;
 export type Imported = boolean;
 export type IntakeSource = "preloaded" | "ad_hoc" | "batch";
-export type Recordid = string;
+export type Recordid1 = string;
 export type Schemaversion = "1.0";
 export type Comparisonid = string;
-export type Durationms = number;
+export type Durationms1 = number;
 export type Extractionid = string;
 export type Modelversion = string | null;
 export type Name1 = string;
@@ -91,8 +131,8 @@ export type ExtractionIssueCode =
   | "extractor_refused"
   | "extractor_invalid_response";
 export type Imageid = string | null;
-export type Message = string;
-export type Issues = ExtractionIssue[];
+export type Message2 = string;
+export type Issues1 = ExtractionIssue[];
 export type Confidence1 = number | null;
 export type Imageid1 = string;
 export type Orientationdegrees = number | null;
@@ -114,13 +154,12 @@ export type Providerms = number;
  * @minItems 1
  * @maxItems 12
  */
-export type Images = [LabelImageInput, ...LabelImageInput[]];
+export type Images1 = [LabelImageInput, ...LabelImageInput[]];
 export type Clientimageid = string;
-export type Filename = string;
-export type ImageMediaType = "image/jpeg" | "image/png";
+export type Filename2 = string;
 export type LabelPanelType = "brand" | "back" | "side" | "neck" | "other" | "unknown";
 export type Sha256 = string | null;
-export type Sizebytes = number;
+export type Sizebytes1 = number;
 export type Effectivedate = string;
 export type Rulesetid = string;
 export type Sourceuri = string | null;
@@ -130,19 +169,19 @@ export type Comparisonid1 = string;
  * @minItems 1
  * @maxItems 12
  */
-export type Images1 = [LabelImageInput, ...LabelImageInput[]];
+export type Images2 = [LabelImageInput, ...LabelImageInput[]];
 export type Submissionid1 = string;
 export type Comment = string | null;
 export type HumanReviewDecision = "approved" | "rejected";
 export type Comment1 = string | null;
 export type Decidedat = string;
 export type Decisionid = string;
-export type Queueitemid = string;
+export type Queueitemid1 = string;
 export type Remainingcount = number;
 export type Undoexpiresat = string;
-export type Completedat = string;
+export type Completedat1 = string;
 export type Decisionsupportonly = true;
-export type Durationms1 = number;
+export type Durationms2 = number;
 /**
  * @minItems 1
  */
@@ -161,28 +200,27 @@ export type VerificationOutcome =
   "match" | "possible_match" | "mismatch" | "not_found" | "not_applicable" | "unable_to_evaluate";
 export type Ruleid = string;
 export type FindingSeverity = "information" | "review" | "discrepancy";
-export type OverallReviewStatus = "no_discrepancies_found" | "review_needed" | "analysis_incomplete";
-export type Recordid1 = string;
+export type Recordid2 = string;
 export type Schemaversion1 = "1.0";
 export type Startedat = string;
 export type Submissionid2 = string;
 export type Verificationid = string;
 export type Attentioncount = number;
 export type Beveragetype = string;
-export type Brandname1 = string;
+export type Brandname2 = string;
 export type Position = number;
-export type Queueitemid1 = string;
+export type Queueitemid2 = string;
 export type Queuedat = string;
-export type Recordid2 = string;
+export type Recordid3 = string;
 export type Version2 = number;
-export type Items = ReviewQueueItemSummary[];
-export type Sessionscoped = boolean;
-export type Totalcount = number;
+export type Items1 = ReviewQueueItemSummary[];
+export type Sessionscoped1 = boolean;
+export type Totalcount1 = number;
 export type Alttext = string;
 export type Imageid3 = string;
 export type Imageurl = string;
 export type LabelPanelType1 = "brand" | "back" | "side" | "neck" | "other" | "unknown";
-export type Images2 = ReviewQueueImage[];
+export type Images3 = ReviewQueueImage[];
 export type Applicationpart = "submission";
 export type Encoding = "multipart/form-data";
 export type Filepart = "images";
@@ -191,6 +229,9 @@ export type Filepart = "images";
  * Schema bundle used to generate frontend boundary types.
  */
 export interface VerificationContract {
+  batch: BatchDetail;
+  batchImageManifest: BatchImageManifest;
+  batchValidationResponse: BatchValidationResponse;
   comparisonInput: ComparisonInput;
   comparisonRequest: ComparisonRequest;
   extraction: OcrExtractionResult;
@@ -203,11 +244,56 @@ export interface VerificationContract {
   submission: VerificationSubmission;
   submissionTransport: SubmissionTransport;
 }
+export interface BatchDetail {
+  batchId: Batchid;
+  completedAt?: Completedat;
+  createdAt: Createdat;
+  failedCount: Failedcount;
+  items: Items;
+  processedCount: Processedcount;
+  readyCount: Readycount;
+  sessionScoped?: Sessionscoped;
+  skippedCount: Skippedcount;
+  status: BatchStatus;
+  totalCount: Totalcount;
+}
+export interface BatchItemSummary {
+  batchItemId: Batchitemid;
+  brandName: Brandname;
+  durationMs?: Durationms;
+  errorCode?: Errorcode;
+  errorMessage?: Errormessage;
+  filename: Filename;
+  overallStatus?: OverallReviewStatus | null;
+  queueItemId?: Queueitemid;
+  recordId: Recordid;
+  retryable?: Retryable;
+  rowNumber: Rownumber;
+  status: BatchItemStatus;
+}
+export interface BatchImageManifest {
+  images: Images;
+}
+export interface BatchImageDeclaration {
+  filename: Filename1;
+  mediaType: ImageMediaType;
+  sizeBytes: Sizebytes;
+}
+export interface BatchValidationResponse {
+  issues: Issues;
+  message: Message1;
+}
+export interface BatchValidationIssue {
+  code: Code;
+  field?: Field;
+  message: Message;
+  row?: Row;
+}
 export interface ComparisonInput {
   application: ApplicationRecord;
   comparisonId: Comparisonid;
   extraction: OcrExtractionResult;
-  images: Images;
+  images: Images1;
   ruleset: RulesetReference;
 }
 export interface ApplicationRecord {
@@ -215,14 +301,14 @@ export interface ApplicationRecord {
   expectedLabel: ExpectedLabelFields;
   imported: Imported;
   intakeSource: IntakeSource;
-  recordId: Recordid;
+  recordId: Recordid1;
   schemaVersion?: Schemaversion;
 }
 export interface ExpectedLabelFields {
   additionalRequiredStatements?: Additionalrequiredstatements;
   alcoholContent?: AlcoholContent | null;
   appellationOfOrigin?: Appellationoforigin;
-  brandName: Brandname;
+  brandName: Brandname1;
   classTypeDesignation: Classtypedesignation;
   countryOfOrigin?: CountryOfOrigin | null;
   netContents: NetContents;
@@ -260,11 +346,11 @@ export interface PostalAddress {
   streetLines?: Streetlines;
 }
 export interface OcrExtractionResult {
-  durationMs: Durationms;
+  durationMs: Durationms1;
   extractionId: Extractionid;
   extractor: ExtractorReference;
   fieldCandidates?: Fieldcandidates;
-  issues?: Issues;
+  issues?: Issues1;
   segments?: Segments;
   status: ExtractionStatus;
   submissionId: Submissionid;
@@ -286,7 +372,7 @@ export interface ExtractionIssue {
   code: ExtractionIssueCode;
   field?: VerificationField | null;
   imageId?: Imageid;
-  message: Message;
+  message: Message2;
 }
 export interface TextSegment {
   confidence?: Confidence1;
@@ -309,11 +395,11 @@ export interface ExtractionTiming {
 }
 export interface LabelImageInput {
   clientImageId: Clientimageid;
-  fileName: Filename;
+  fileName: Filename2;
   mediaType: ImageMediaType;
   panelType?: LabelPanelType;
   sha256?: Sha256;
-  sizeBytes: Sizebytes;
+  sizeBytes: Sizebytes1;
 }
 export interface RulesetReference {
   effectiveDate: Effectivedate;
@@ -331,7 +417,7 @@ export interface ComparisonRequest {
 }
 export interface VerificationSubmission {
   application: ApplicationRecord;
-  images: Images1;
+  images: Images2;
   submissionId: Submissionid1;
 }
 export interface HumanReviewDecisionRequest {
@@ -343,18 +429,18 @@ export interface HumanReviewReceipt {
   decidedAt: Decidedat;
   decision: HumanReviewDecision;
   decisionId: Decisionid;
-  queueItemId: Queueitemid;
+  queueItemId: Queueitemid1;
   remainingCount: Remainingcount;
   undoExpiresAt: Undoexpiresat;
 }
 export interface VerificationResult {
-  completedAt: Completedat;
+  completedAt: Completedat1;
   decisionSupportOnly?: Decisionsupportonly;
-  durationMs: Durationms1;
+  durationMs: Durationms2;
   extractor: ExtractorReference;
   findings: Findings;
   overallStatus: OverallReviewStatus;
-  recordId: Recordid1;
+  recordId: Recordid2;
   ruleset: RulesetReference;
   schemaVersion?: Schemaversion1;
   startedAt: Startedat;
@@ -384,19 +470,19 @@ export interface EvidenceReference {
   segmentIds?: Segmentids;
 }
 export interface ReviewQueueResponse {
-  items: Items;
-  sessionScoped?: Sessionscoped;
-  totalCount: Totalcount;
+  items: Items1;
+  sessionScoped?: Sessionscoped1;
+  totalCount: Totalcount1;
 }
 export interface ReviewQueueItemSummary {
   attentionCount: Attentioncount;
   beverageType: Beveragetype;
-  brandName: Brandname1;
+  brandName: Brandname2;
   overallStatus: OverallReviewStatus;
   position: Position;
-  queueItemId: Queueitemid1;
+  queueItemId: Queueitemid2;
   queuedAt: Queuedat;
-  recordId: Recordid2;
+  recordId: Recordid3;
   version: Version2;
 }
 export interface ReviewQueueCreateRequest {
@@ -405,7 +491,7 @@ export interface ReviewQueueCreateRequest {
 }
 export interface ReviewQueueItemDetail {
   application: ApplicationRecord;
-  images: Images2;
+  images: Images3;
   summary: ReviewQueueItemSummary;
   verification: VerificationResult;
 }

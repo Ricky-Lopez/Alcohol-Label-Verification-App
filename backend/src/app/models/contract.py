@@ -1,4 +1,9 @@
 from app.models.base import ContractModel
+from app.models.batch import (
+    BatchDetail,
+    BatchImageManifest,
+    BatchValidationResponse,
+)
 from app.models.extraction import OcrExtractionResult
 from app.models.label import SubmissionTransport, VerificationSubmission
 from app.models.review_queue import (
@@ -25,3 +30,6 @@ class VerificationContract(ContractModel):
     review_queue_item: ReviewQueueItemDetail
     human_review_decision_request: HumanReviewDecisionRequest
     human_review_receipt: HumanReviewReceipt
+    batch_image_manifest: BatchImageManifest
+    batch: BatchDetail
+    batch_validation_response: BatchValidationResponse

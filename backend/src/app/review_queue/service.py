@@ -348,6 +348,7 @@ class ReviewQueueRepository:
         verification: VerificationResult,
         image: PreparedImage,
         panel_type: LabelPanelType,
+        position: int | None = None,
     ) -> ReviewQueueItemDetail:
         with self._lock:
             existing = next(
@@ -368,7 +369,7 @@ class ReviewQueueRepository:
 
             record = QueueRecord(
                 queue_item_id=f"queue-item-{uuid4()}",
-                position=self._next_position,
+                position=position if position is not None else self._next_position,
                 application=application,
                 verification=verification,
                 queued_at=self._clock(),
@@ -377,9 +378,26 @@ class ReviewQueueRepository:
                 source_image_id=image.client_image_id,
                 panel_type=panel_type,
             )
-            self._next_position += 1
+            if position is None:
+                self._next_position += 1
             self._active[record.queue_item_id] = record
             return self.detail(record.queue_item_id)
+
+    def reserve_positions(self, count: int) -> list[int]:
+        """Reserve stable queue positions before concurrent batch processing begins."""
+        with self._lock:
+            positions = list(range(self._next_position, self._next_position + count))
+            self._next_position += count
+            return positions
+
+    def contains_record(self, record_id: str) -> bool:
+        with self._lock:
+            return any(
+                record.application.record_id == record_id for record in self._active.values()
+            ) or any(
+                completed.record.application.record_id == record_id
+                for completed in self._completed.values()
+            )
 
     def decide(
         self, queue_item_id: str, decision: HumanReviewDecision, comment: str | None

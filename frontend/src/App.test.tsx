@@ -5,7 +5,7 @@ import { App } from './App'
 import { exampleApplication } from './exampleApplication'
 
 const healthyService = () => new Response(JSON.stringify({ status: 'ok', service: 'alcohol-label-verification-api' }), { status: 200, headers: { 'Content-Type': 'application/json' } })
-const openApplicationInput = () => fireEvent.click(screen.getAllByRole('button', { name: 'Application Input' })[0]!)
+const openApplicationInput = () => fireEvent.click(screen.getAllByRole('button', { name: 'Single Application Input' })[0]!)
 
 describe('App', () => {
   afterEach(() => { cleanup(); vi.unstubAllGlobals() })
