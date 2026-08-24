@@ -85,6 +85,10 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Review this application now' }))
     expect(await screen.findByRole('heading', { name: 'OLD TOM DISTILLERY' })).toBeInTheDocument()
     expect(screen.getByText('Submitted label image')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Reviewer Hub' }))
+    expect(await screen.findByRole('heading', { name: 'Reviewer Hub' })).toBeInTheDocument()
+    expect(screen.getByText('1 applications in queue')).toBeInTheDocument()
   })
 
   it('makes Reviewer Hub the primary home workflow', () => {
