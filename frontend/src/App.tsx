@@ -7,13 +7,14 @@ import {
   type PendingLabelImage
 } from './api/extractions'
 import { requestComparison, type ComparisonApiOutcome } from './api/comparisons'
+import { enqueueReviewQueueItem } from './api/reviewQueue'
 import { ReviewerHub } from './ReviewerHub'
 import type {
   ApplicationRecord,
   BeverageType,
-  LabelPanelType,
   NetContentsUnit,
   OcrExtractionResult,
+  ReviewQueueItemDetail,
   VerificationResult,
   VerificationField,
   VerificationSubmission
@@ -47,6 +48,8 @@ type WorkflowState = {
   outcome: ExtractionApiOutcome | null
   submission: VerificationSubmission | null
   comparison: ComparisonApiOutcome | null
+  queuedItem: ReviewQueueItemDetail | null
+  queueError: string | null
   isSubmitting: boolean
   mockScenario: MockScenario
 }
@@ -54,12 +57,13 @@ type WorkflowState = {
 type WorkflowAction =
   | { type: 'update-value'; field: keyof FormValues; value: string | boolean }
   | { type: 'set-image'; image: PendingLabelImage | null }
-  | { type: 'set-panel'; panelType: LabelPanelType }
   | { type: 'set-errors'; errors: Record<string, string> }
   | { type: 'set-step'; step: ReviewStep }
   | { type: 'set-outcome'; outcome: ExtractionApiOutcome | null }
   | { type: 'set-submission'; submission: VerificationSubmission | null }
   | { type: 'set-comparison'; comparison: ComparisonApiOutcome | null }
+  | { type: 'set-queued-item'; item: ReviewQueueItemDetail | null }
+  | { type: 'set-queue-error'; message: string | null }
   | { type: 'set-submitting'; isSubmitting: boolean }
   | { type: 'set-mock-scenario'; scenario: MockScenario }
   | { type: 'load-example' }
@@ -69,7 +73,7 @@ const blankValues = (): FormValues => ({
   beverageType: 'distilled_spirits', brandName: '', classTypeDesignation: '', netContentsValue: '', netContentsUnit: 'mL', abvPercent: '', proof: '', responsiblePartyName: '', city: '', region: '', countryCode: 'US', imported: false, originCountryCode: '', originDisplayName: ''
 })
 
-const initialState = (): WorkflowState => ({ step: 'expected-values', values: blankValues(), image: null, errors: {}, outcome: null, submission: null, comparison: null, isSubmitting: false, mockScenario: 'success' })
+const initialState = (): WorkflowState => ({ step: 'expected-values', values: blankValues(), image: null, errors: {}, outcome: null, submission: null, comparison: null, queuedItem: null, queueError: null, isSubmitting: false, mockScenario: 'success' })
 
 const valuesFromExample = (): FormValues => {
   const expected = exampleApplication.expectedLabel
@@ -81,12 +85,13 @@ const workflowReducer = (state: WorkflowState, action: WorkflowAction): Workflow
   switch (action.type) {
     case 'update-value': return { ...state, values: { ...state.values, [action.field]: action.value }, errors: { ...state.errors, [action.field]: '' } }
     case 'set-image': return { ...state, image: action.image, errors: { ...state.errors, image: '' } }
-    case 'set-panel': return state.image ? { ...state, image: { ...state.image, metadata: { ...state.image.metadata, panelType: action.panelType } } } : state
     case 'set-errors': return { ...state, errors: action.errors }
     case 'set-step': return { ...state, step: action.step, errors: {} }
     case 'set-outcome': return { ...state, outcome: action.outcome }
     case 'set-submission': return { ...state, submission: action.submission }
     case 'set-comparison': return { ...state, comparison: action.comparison }
+    case 'set-queued-item': return { ...state, queuedItem: action.item }
+    case 'set-queue-error': return { ...state, queueError: action.message }
     case 'set-submitting': return { ...state, isSubmitting: action.isSubmitting }
     case 'set-mock-scenario': return { ...state, mockScenario: action.scenario }
     case 'load-example': return { ...state, values: valuesFromExample(), errors: {} }
@@ -115,7 +120,6 @@ const fieldExamples: Record<string, string> = {
   countryCode: 'Example: US',
   originCountryCode: 'Example: FR',
   originDisplayName: 'Example: France',
-  panelType: 'Example: Brand panel',
   mockScenario: 'Example: Successful extraction'
 }
 const formatBytes = (bytes: number) => `${(bytes / 1_000_000).toFixed(bytes >= 1_000_000 ? 1 : 2)} MB`
@@ -148,7 +152,7 @@ export const buildSubmission = (values: FormValues, image: PendingLabelImage): V
   return { submissionId: `submission-${crypto.randomUUID()}`, application, images: [image.metadata] }
 }
 
-const ApplicationInput = () => {
+const ApplicationInput = ({ onReviewNow }: { onReviewNow: (queueItemId: string) => void }) => {
   const [state, dispatch] = useReducer(workflowReducer, undefined, initialState)
   const [serviceState, setServiceState] = useState<'loading' | 'ready' | 'error'>('loading')
   const [serviceMessage, setServiceMessage] = useState('Checking verification service…')
@@ -170,22 +174,48 @@ const ApplicationInput = () => {
     dispatch({ type: 'set-image', image: { file, previewUrl: URL.createObjectURL(file), metadata: { clientImageId: `image-${crypto.randomUUID()}`, fileName: file.name, mediaType: file.type as 'image/jpeg' | 'image/png', sizeBytes: file.size, panelType: 'unknown' } } })
   }
   const goToUpload = () => { const errors = validateExpectedValues(state.values); if (Object.keys(errors).length) { dispatch({ type: 'set-errors', errors }); return }; dispatch({ type: 'set-step', step: 'upload-label' }) }
+  const enqueueCompletedReview = async (
+    submission: VerificationSubmission,
+    verification: VerificationResult,
+    image: PendingLabelImage
+  ) => {
+    const queueOutcome = await enqueueReviewQueueItem(submission, verification, image)
+    if (queueOutcome.kind === 'completed') {
+      dispatch({ type: 'set-queued-item', item: queueOutcome.value })
+      dispatch({ type: 'set-queue-error', message: null })
+      return
+    }
+    dispatch({ type: 'set-queue-error', message: queueOutcome.message })
+  }
   const submit = async () => {
     const errors = validateExpectedValues(state.values); if (!state.image) errors.image = 'Upload one label image before verifying.'
     if (Object.keys(errors).length) { dispatch({ type: 'set-errors', errors }); dispatch({ type: 'set-step', step: state.image ? 'expected-values' : 'upload-label' }); return }
     if (!state.image) return
     const submission = buildSubmission(state.values, state.image)
-    dispatch({ type: 'set-submitting', isSubmitting: true }); dispatch({ type: 'set-outcome', outcome: null }); dispatch({ type: 'set-comparison', comparison: null }); dispatch({ type: 'set-submission', submission })
+    dispatch({ type: 'set-submitting', isSubmitting: true }); dispatch({ type: 'set-outcome', outcome: null }); dispatch({ type: 'set-comparison', comparison: null }); dispatch({ type: 'set-queued-item', item: null }); dispatch({ type: 'set-queue-error', message: null }); dispatch({ type: 'set-submission', submission })
     const outcome = await requestExtraction(submission, state.image, mockControlsEnabled ? { mockScenario: state.mockScenario } : {})
-    dispatch({ type: 'set-submitting', isSubmitting: false }); dispatch({ type: 'set-outcome', outcome })
-    if (outcome.kind === 'validation-error') { dispatch({ type: 'set-errors', errors: { image: outcome.message } }); dispatch({ type: 'set-step', step: 'upload-label' }); return }
-    if (outcome.kind === 'completed') dispatch({ type: 'set-comparison', comparison: await requestComparison(submission, outcome.result) })
+    dispatch({ type: 'set-outcome', outcome })
+    if (outcome.kind === 'validation-error') { dispatch({ type: 'set-submitting', isSubmitting: false }); dispatch({ type: 'set-errors', errors: { image: outcome.message } }); dispatch({ type: 'set-step', step: 'upload-label' }); return }
+    if (outcome.kind === 'completed') {
+      const comparison = await requestComparison(submission, outcome.result)
+      dispatch({ type: 'set-comparison', comparison })
+      if (comparison.kind === 'completed') await enqueueCompletedReview(submission, comparison.result, state.image)
+    }
+    dispatch({ type: 'set-submitting', isSubmitting: false })
     dispatch({ type: 'set-step', step: 'review-extraction' })
   }
   const retryComparison = async () => {
-    if (!state.submission || state.outcome?.kind !== 'completed') return
+    if (!state.submission || state.outcome?.kind !== 'completed' || !state.image) return
     dispatch({ type: 'set-submitting', isSubmitting: true })
-    dispatch({ type: 'set-comparison', comparison: await requestComparison(state.submission, state.outcome.result) })
+    const comparison = await requestComparison(state.submission, state.outcome.result)
+    dispatch({ type: 'set-comparison', comparison })
+    if (comparison.kind === 'completed') await enqueueCompletedReview(state.submission, comparison.result, state.image)
+    dispatch({ type: 'set-submitting', isSubmitting: false })
+  }
+  const retryQueue = async () => {
+    if (!state.submission || state.comparison?.kind !== 'completed' || !state.image) return
+    dispatch({ type: 'set-submitting', isSubmitting: true })
+    await enqueueCompletedReview(state.submission, state.comparison.result, state.image)
     dispatch({ type: 'set-submitting', isSubmitting: false })
   }
   const startNew = () => { if (state.image) URL.revokeObjectURL(state.image.previewUrl); dispatch({ type: 'start-new' }); if (fileInputRef.current) fileInputRef.current.value = '' }
@@ -197,8 +227,8 @@ const ApplicationInput = () => {
     <ol className="step-list" aria-label="Review steps">{['Expected values', 'Upload label', 'Review results'].map((label, index) => <li key={label} aria-current={index === currentStepIndex ? 'step' : undefined} className={index <= currentStepIndex ? 'step--active' : ''}><span>{index + 1}</span>{label}</li>)}</ol>
     {Object.values(state.errors).some(Boolean) && <div className="error-summary" role="alert" tabIndex={-1} ref={errorSummaryRef}><h2>Review the highlighted information</h2><ul>{Object.entries(state.errors).filter(([, message]) => message).map(([field, message]) => <li key={field}><a href={`#${field}`}>{message}</a></li>)}</ul></div>}
     {state.step === 'expected-values' && <ExpectedValues values={state.values} errors={state.errors} updateValue={updateValue} loadExample={() => dispatch({ type: 'load-example' })} onContinue={goToUpload} />}
-    {state.step === 'upload-label' && <UploadLabel image={state.image} errors={state.errors} fileInputRef={fileInputRef} onSelectImage={selectImage} onPanelChange={(panelType) => dispatch({ type: 'set-panel', panelType })} mockScenario={state.mockScenario} onMockScenario={(scenario) => dispatch({ type: 'set-mock-scenario', scenario })} onBack={() => dispatch({ type: 'set-step', step: 'expected-values' })} onSubmit={() => void submit()} isSubmitting={state.isSubmitting} onRemove={removeImage} />}
-    {state.step === 'review-extraction' && state.outcome && <ExtractionReview outcome={state.outcome} comparison={state.comparison} image={state.image} onRetry={() => void submit()} onRetryComparison={() => void retryComparison()} onBack={() => dispatch({ type: 'set-step', step: 'upload-label' })} onStartNew={startNew} isSubmitting={state.isSubmitting} />}
+    {state.step === 'upload-label' && <UploadLabel image={state.image} errors={state.errors} fileInputRef={fileInputRef} onSelectImage={selectImage} mockScenario={state.mockScenario} onMockScenario={(scenario) => dispatch({ type: 'set-mock-scenario', scenario })} onBack={() => dispatch({ type: 'set-step', step: 'expected-values' })} onSubmit={() => void submit()} isSubmitting={state.isSubmitting} onRemove={removeImage} />}
+    {state.step === 'review-extraction' && state.outcome && <ExtractionReview outcome={state.outcome} comparison={state.comparison} image={state.image} queuedItem={state.queuedItem} queueError={state.queueError} onRetry={() => void submit()} onRetryComparison={() => void retryComparison()} onRetryQueue={() => void retryQueue()} onReviewNow={onReviewNow} onBack={() => dispatch({ type: 'set-step', step: 'upload-label' })} onStartNew={startNew} isSubmitting={state.isSubmitting} />}
   </main>
 }
 
@@ -207,7 +237,7 @@ const TextField = ({ field, label, value, onChange, error, example, inputMode = 
 
 const ExpectedValues = ({ values, errors, updateValue, loadExample, onContinue }: { values: FormValues; errors: Record<string, string>; updateValue: (field: keyof FormValues, value: string | boolean) => void; loadExample: () => void; onContinue: () => void }) => <section className="workflow-card" aria-labelledby="expected-values-title"><div className="section-heading"><div><p className="step-caption">Step 1 of 3</p><h2 id="expected-values-title">Expected application values</h2></div><button type="button" className="secondary-button" onClick={loadExample}>Load synthetic example</button></div><p>Enter the values expected on the label. Government-warning wording is checked later against an approved ruleset, so it is not entered here.</p><div className="form-grid"><Field label="Beverage type" field="beverageType"><select id="beverageType" value={values.beverageType} onChange={(event) => updateValue('beverageType', event.target.value)}><option value="beer">Beer</option><option value="wine">Wine</option><option value="distilled_spirits">Distilled spirits</option></select></Field><TextField field="brandName" label="Brand name" value={values.brandName} onChange={(value) => updateValue('brandName', value)} error={errors.brandName} example="Example: Old Tom Distillery" /><TextField field="classTypeDesignation" label="Class/type designation" value={values.classTypeDesignation} onChange={(value) => updateValue('classTypeDesignation', value)} error={errors.classTypeDesignation} example="Example: Kentucky Straight Bourbon Whiskey" /><TextField field="netContentsValue" label="Net contents" inputMode="decimal" value={values.netContentsValue} onChange={(value) => updateValue('netContentsValue', value)} error={errors.netContentsValue} /><Field label="Net contents unit" field="netContentsUnit"><select id="netContentsUnit" value={values.netContentsUnit} onChange={(event) => updateValue('netContentsUnit', event.target.value)}><option value="mL">mL</option><option value="L">L</option><option value="fl_oz">Fluid ounces</option><option value="pt">Pints</option><option value="qt">Quarts</option><option value="gal">Gallons</option></select></Field>{values.beverageType === 'distilled_spirits' && <TextField field="abvPercent" label="Alcohol by volume (ABV %)" inputMode="decimal" value={values.abvPercent} onChange={(value) => updateValue('abvPercent', value)} error={errors.abvPercent} />}<TextField field="proof" label="Proof (optional)" inputMode="decimal" value={values.proof} onChange={(value) => updateValue('proof', value)} error={errors.proof} /></div><fieldset><legend>Bottler/producer name and address</legend><div className="form-grid"><TextField field="responsiblePartyName" label="Business name" value={values.responsiblePartyName} onChange={(value) => updateValue('responsiblePartyName', value)} error={errors.responsiblePartyName} /><TextField field="city" label="City" value={values.city} onChange={(value) => updateValue('city', value)} error={errors.city} /><TextField field="region" label="State, province, or region (optional)" value={values.region} onChange={(value) => updateValue('region', value)} /><TextField field="countryCode" label="Business country code" value={values.countryCode} onChange={(value) => updateValue('countryCode', value)} error={errors.countryCode} example="Example: US" /></div></fieldset><fieldset><legend>Product origin</legend><label className="checkbox-label"><input id="imported" type="checkbox" checked={values.imported} onChange={(event) => updateValue('imported', event.target.checked)} /> This is an imported product</label>{values.imported && <div className="form-grid conditional-fields"><TextField field="originCountryCode" label="Origin country code" value={values.originCountryCode} onChange={(value) => updateValue('originCountryCode', value)} error={errors.originCountryCode} example="Example: FR" /><TextField field="originDisplayName" label="Country of origin" value={values.originDisplayName} onChange={(value) => updateValue('originDisplayName', value)} error={errors.originDisplayName} /></div>}</fieldset><div className="actions"><button type="button" onClick={onContinue}>Continue to upload label</button></div></section>
 
-const UploadLabel = ({ image, errors, fileInputRef, onSelectImage, onPanelChange, mockScenario, onMockScenario, onBack, onSubmit, isSubmitting, onRemove }: { image: PendingLabelImage | null; errors: Record<string, string>; fileInputRef: React.RefObject<HTMLInputElement | null>; onSelectImage: (file: File | undefined) => void; onPanelChange: (panel: LabelPanelType) => void; mockScenario: MockScenario; onMockScenario: (scenario: MockScenario) => void; onBack: () => void; onSubmit: () => void; isSubmitting: boolean; onRemove: () => void }) => <section className="workflow-card" aria-labelledby="upload-label-title"><p className="step-caption">Step 2 of 3</p><h2 id="upload-label-title">Upload label image</h2><p>Choose one JPEG or PNG label image up to 20 MB. The image is processed in memory and is not saved by this prototype.</p><input ref={fileInputRef} id="image" className="visually-hidden" type="file" accept="image/jpeg,image/png" aria-invalid={Boolean(errors.image)} aria-describedby={errors.image ? errorId('image') : undefined} onChange={(event) => onSelectImage(event.target.files?.[0])} /><label className="drop-zone" htmlFor="image" onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); onSelectImage(event.dataTransfer.files[0]) }}><strong>Choose a label image</strong><span>or drag and drop a JPEG or PNG here</span></label>{errors.image && <p className="field-error" id={errorId('image')}>{errors.image}</p>}{image && <div className="image-details"><img src={image.previewUrl} alt={`Preview of selected label image: ${image.metadata.fileName}`} /><div><h3>{image.metadata.fileName}</h3><p>{formatBytes(image.metadata.sizeBytes)}</p><Field label="Label panel" field="panelType"><select id="panelType" value={image.metadata.panelType} onChange={(event) => onPanelChange(event.target.value as LabelPanelType)}><option value="unknown">Unknown</option><option value="brand">Brand panel</option><option value="back">Back panel</option><option value="side">Side panel</option><option value="neck">Neck panel</option><option value="other">Other panel</option></select></Field><button type="button" className="secondary-button" onClick={onRemove}>Remove image</button></div></div>}{mockControlsEnabled && <Field label="Mock OCR scenario (development only)" field="mockScenario"><select id="mockScenario" value={mockScenario} onChange={(event) => onMockScenario(event.target.value as MockScenario)}>{mockScenarios.map((scenario) => <option key={scenario.value} value={scenario.value}>{scenario.label}</option>)}</select></Field>}<div className="actions"><button type="button" className="secondary-button" onClick={onBack}>Back</button><button type="button" disabled={isSubmitting || !image} onClick={onSubmit}>{isSubmitting ? 'Analyzing label…' : 'Verify label'}</button></div></section>
+const UploadLabel = ({ image, errors, fileInputRef, onSelectImage, mockScenario, onMockScenario, onBack, onSubmit, isSubmitting, onRemove }: { image: PendingLabelImage | null; errors: Record<string, string>; fileInputRef: React.RefObject<HTMLInputElement | null>; onSelectImage: (file: File | undefined) => void; mockScenario: MockScenario; onMockScenario: (scenario: MockScenario) => void; onBack: () => void; onSubmit: () => void; isSubmitting: boolean; onRemove: () => void }) => <section className="workflow-card" aria-labelledby="upload-label-title"><p className="step-caption">Step 2 of 3</p><h2 id="upload-label-title">Upload label image</h2><p>Choose one JPEG or PNG label image up to 20 MB. The image is processed in memory and retained only in the temporary reviewer queue after analysis.</p><input ref={fileInputRef} id="image" className="visually-hidden" type="file" accept="image/jpeg,image/png" aria-invalid={Boolean(errors.image)} aria-describedby={errors.image ? errorId('image') : undefined} onChange={(event) => onSelectImage(event.target.files?.[0])} /><label className="drop-zone" htmlFor="image" onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); onSelectImage(event.dataTransfer.files[0]) }}><strong>Choose a label image</strong><span>or drag and drop a JPEG or PNG here</span></label>{errors.image && <p className="field-error" id={errorId('image')}>{errors.image}</p>}{image && <div className="image-details"><img src={image.previewUrl} alt={`Preview of selected label image: ${image.metadata.fileName}`} /><div><h3>{image.metadata.fileName}</h3><p>{formatBytes(image.metadata.sizeBytes)}</p><button type="button" className="secondary-button" onClick={onRemove}>Remove image</button></div></div>}{mockControlsEnabled && <Field label="Mock OCR scenario (development only)" field="mockScenario"><select id="mockScenario" value={mockScenario} onChange={(event) => onMockScenario(event.target.value as MockScenario)}>{mockScenarios.map((scenario) => <option key={scenario.value} value={scenario.value}>{scenario.label}</option>)}</select></Field>}<div className="actions"><button type="button" className="secondary-button" onClick={onBack}>Back</button><button type="button" disabled={isSubmitting || !image} onClick={onSubmit}>{isSubmitting ? 'Analyzing label…' : 'Verify label'}</button></div></section>
 
 const statusLabel: Record<VerificationResult['overallStatus'], string> = {
   no_discrepancies_found: 'No discrepancies found',
@@ -215,17 +245,17 @@ const statusLabel: Record<VerificationResult['overallStatus'], string> = {
   analysis_incomplete: 'Analysis incomplete'
 }
 
-const ExtractionReview = ({ outcome, comparison, image, onRetry, onRetryComparison, onBack, onStartNew, isSubmitting }: { outcome: ExtractionApiOutcome; comparison: ComparisonApiOutcome | null; image: PendingLabelImage | null; onRetry: () => void; onRetryComparison: () => void; onBack: () => void; onStartNew: () => void; isSubmitting: boolean }) => {
+const ExtractionReview = ({ outcome, comparison, image, queuedItem, queueError, onRetry, onRetryComparison, onRetryQueue, onReviewNow, onBack, onStartNew, isSubmitting }: { outcome: ExtractionApiOutcome; comparison: ComparisonApiOutcome | null; image: PendingLabelImage | null; queuedItem: ReviewQueueItemDetail | null; queueError: string | null; onRetry: () => void; onRetryComparison: () => void; onRetryQueue: () => void; onReviewNow: (queueItemId: string) => void; onBack: () => void; onStartNew: () => void; isSubmitting: boolean }) => {
   if (outcome.kind === 'network-error') return <section className="workflow-card" aria-live="polite"><p className="step-caption">Step 3 of 3</p><h2>Analysis could not start</h2><p>{outcome.message}</p><div className="actions"><button type="button" className="secondary-button" onClick={onBack}>Back to upload</button><button type="button" disabled={isSubmitting} onClick={onRetry}>Try again</button></div></section>
   if (outcome.kind === 'validation-error') return null
-  if (comparison?.kind === 'completed') return <VerificationReview result={comparison.result} image={image} onBack={onBack} onStartNew={onStartNew} />
+  if (comparison?.kind === 'completed') return <VerificationReview result={comparison.result} image={image} queuedItem={queuedItem} queueError={queueError} onRetryQueue={onRetryQueue} onReviewNow={onReviewNow} onBack={onBack} onStartNew={onStartNew} isSubmitting={isSubmitting} />
   const result = outcome.result
   const candidates = result.fieldCandidates ?? []
   const issues = result.issues ?? []
   return <section className="workflow-card extraction-review" aria-live="polite"><p className="step-caption">Step 3 of 3</p><h2>{resultHeading(result)}</h2><p className="result-disclaimer">OCR observations could not yet be compared with the approved label requirements.</p>{comparison && <p className="provider-notice">{comparison.message}</p>}{outcome.kind === 'provider-failure' && <p className="provider-notice">The analysis service was unavailable or timed out. Any observations below may be incomplete.</p>}{image && <div className="review-image"><img src={image.previewUrl} alt={`Uploaded label: ${image.metadata.fileName}`} /><p>Image: {image.metadata.fileName}</p></div>}<p className="record-reference">Submission: {result.submissionId}</p><h3>Observed label fields</h3>{candidates.length ? <dl className="candidate-list">{candidates.map((candidate) => <div key={`${candidate.field}-${candidate.rawText}`}><dt>{fieldLabels[candidate.field]}</dt><dd className={candidate.field === 'government_warning_text' ? 'verbatim-text' : undefined}>{candidate.rawText}</dd></div>)}</dl> : <p>No reliable label fields were observed.</p>}<h3>Review notes</h3>{issues.length ? <ul className="issue-list">{issues.map((issue, index) => <li key={`${issue.code}-${index}`}><strong>{issue.field ? fieldLabels[issue.field] : 'Image review'}:</strong> {issue.message}</li>)}</ul> : <p>No extraction issues were reported.</p>}<div className="actions"><button type="button" className="secondary-button" onClick={onBack}>Back to upload</button>{comparison && <button type="button" disabled={isSubmitting} onClick={onRetryComparison}>{isSubmitting ? 'Retrying…' : 'Retry comparison'}</button>}{(outcome.kind === 'provider-failure' || result.status !== 'succeeded') && <button type="button" disabled={isSubmitting} onClick={onRetry}>{isSubmitting ? 'Retrying…' : 'Try again'}</button>}<button type="button" className="secondary-button" onClick={onStartNew}>Start new review</button></div></section>
 }
 
-const VerificationReview = ({ result, image, onBack, onStartNew }: { result: VerificationResult; image: PendingLabelImage | null; onBack: () => void; onStartNew: () => void }) => <section className="workflow-card extraction-review" aria-live="polite"><p className="step-caption">Step 3 of 3</p><h2>{statusLabel[result.overallStatus]}</h2><p className="result-disclaimer">These results assist human review and are not a final compliance determination.</p>{image && <div className="review-image"><img src={image.previewUrl} alt={`Uploaded label: ${image.metadata.fileName}`} /><p>Image: {image.metadata.fileName}</p></div>}<p className="record-reference">Record: {result.recordId}<br />Submission: {result.submissionId}<br />Ruleset: {result.ruleset.rulesetId} {result.ruleset.version}</p><h3>Label requirement findings</h3><div className="finding-list">{result.findings.map((finding, index) => <article className={`finding finding--${finding.severity}`} key={`${finding.field}-${finding.ruleId}-${index}`}><h4><span aria-hidden="true">{finding.outcome === 'match' || finding.outcome === 'not_applicable' ? '✓' : finding.outcome === 'mismatch' || finding.outcome === 'not_found' ? '!' : '?'}</span> {fieldLabels[finding.field]}: {finding.outcome.replaceAll('_', ' ')}</h4><p>{finding.explanation}</p>{finding.expected && <p><strong>Expected:</strong> {finding.expected.displayValue}</p>}{finding.detected?.length ? <div><strong>Detected:</strong><ul>{finding.detected.map((value, valueIndex) => <li className={finding.field === 'government_warning_text' ? 'verbatim-text' : undefined} key={`${value.displayValue}-${valueIndex}`}>{value.displayValue}</li>)}</ul></div> : null}{finding.evidence?.length ? <p><strong>Evidence:</strong> {finding.evidence.map((evidence) => evidence.excerpt).filter(Boolean).join(' | ')}</p> : null}</article>)}</div><div className="actions"><button type="button" className="secondary-button" onClick={onBack}>Back to upload</button><button type="button" className="secondary-button" onClick={onStartNew}>Start new review</button></div></section>
+const VerificationReview = ({ result, image, queuedItem, queueError, onRetryQueue, onReviewNow, onBack, onStartNew, isSubmitting }: { result: VerificationResult; image: PendingLabelImage | null; queuedItem: ReviewQueueItemDetail | null; queueError: string | null; onRetryQueue: () => void; onReviewNow: (queueItemId: string) => void; onBack: () => void; onStartNew: () => void; isSubmitting: boolean }) => <section className="workflow-card extraction-review" aria-live="polite"><p className="step-caption">Step 3 of 3</p><h2>{statusLabel[result.overallStatus]}</h2><p className="result-disclaimer">These results assist human review and are not a final compliance determination.</p>{queuedItem && <p className="queue-success">Application added to the Reviewer Hub.</p>}{queueError && <div className="error-summary" role="alert"><p>{queueError}</p><button type="button" disabled={isSubmitting} onClick={onRetryQueue}>{isSubmitting ? 'Adding application…' : 'Try adding to Reviewer Hub again'}</button></div>}{image && <div className="review-image"><img src={image.previewUrl} alt={`Uploaded label: ${image.metadata.fileName}`} /><p>Image: {image.metadata.fileName}</p></div>}<p className="record-reference">Record: {result.recordId}<br />Submission: {result.submissionId}<br />Ruleset: {result.ruleset.rulesetId} {result.ruleset.version}</p><h3>Label requirement findings</h3><div className="finding-list">{result.findings.map((finding, index) => <article className={`finding finding--${finding.severity}`} key={`${finding.field}-${finding.ruleId}-${index}`}><h4><span aria-hidden="true">{finding.outcome === 'match' || finding.outcome === 'not_applicable' ? '✓' : finding.outcome === 'mismatch' || finding.outcome === 'not_found' ? '!' : '?'}</span> {fieldLabels[finding.field]}: {finding.outcome.replaceAll('_', ' ')}</h4><p>{finding.explanation}</p>{finding.expected && <p><strong>Expected:</strong> {finding.expected.displayValue}</p>}{finding.detected?.length ? <div><strong>Detected:</strong><ul>{finding.detected.map((value, valueIndex) => <li className={finding.field === 'government_warning_text' ? 'verbatim-text' : undefined} key={`${value.displayValue}-${valueIndex}`}>{value.displayValue}</li>)}</ul></div> : null}{finding.evidence?.length ? <p><strong>Evidence:</strong> {finding.evidence.map((evidence) => evidence.excerpt).filter(Boolean).join(' | ')}</p> : null}</article>)}</div><div className="actions">{queuedItem && <button type="button" onClick={() => onReviewNow(queuedItem.summary.queueItemId)}>Review this application now</button>}<button type="button" className="secondary-button" onClick={onBack}>Back to upload</button><button type="button" className="secondary-button" onClick={onStartNew}>Start new review</button></div></section>
 
 type PrimaryView = 'home' | 'reviewer-hub' | 'application-input'
 
@@ -233,5 +263,7 @@ const Home = ({ onOpenHub, onOpenInput }: { onOpenHub: () => void; onOpenInput: 
 
 export const App = () => {
   const [view, setView] = useState<PrimaryView>('home')
-  return <main className="app-shell"><header className="app-header"><p className="eyebrow">Decision-support prototype</p><h1>Alcohol Label Verification</h1><p className="lede">Human reviewers make the final application decision. OCR and comparison results provide evidence for that review.</p><nav className="app-nav" aria-label="Primary navigation"><button type="button" className="secondary-button" onClick={() => setView('home')}>Home</button><button type="button" className="secondary-button" onClick={() => setView('reviewer-hub')}>Reviewer Hub</button><button type="button" className="secondary-button" onClick={() => setView('application-input')}>Application Input</button></nav></header>{view === 'home' && <Home onOpenHub={() => setView('reviewer-hub')} onOpenInput={() => setView('application-input')} />}{view === 'reviewer-hub' && <ReviewerHub onHome={() => setView('home')} />}{view === 'application-input' && <ApplicationInput />}</main>
+  const [requestedQueueItemId, setRequestedQueueItemId] = useState<string | null>(null)
+  const openReviewerHub = (queueItemId: string | null = null) => { setRequestedQueueItemId(queueItemId); setView('reviewer-hub') }
+  return <main className="app-shell"><header className="app-header"><p className="eyebrow">Decision-support prototype</p><h1>Alcohol Label Verification</h1><p className="lede">Human reviewers make the final application decision. OCR and comparison results provide evidence for that review.</p><nav className="app-nav" aria-label="Primary navigation"><button type="button" className="secondary-button" onClick={() => setView('home')}>Home</button><button type="button" className="secondary-button" onClick={() => openReviewerHub()}>Reviewer Hub</button><button type="button" className="secondary-button" onClick={() => setView('application-input')}>Application Input</button></nav></header>{view === 'home' && <Home onOpenHub={() => openReviewerHub()} onOpenInput={() => setView('application-input')} />}{view === 'reviewer-hub' && <ReviewerHub onHome={() => setView('home')} initialQueueItemId={requestedQueueItemId} />}{view === 'application-input' && <ApplicationInput onReviewNow={(queueItemId) => openReviewerHub(queueItemId)} />}</main>
 }

@@ -91,18 +91,22 @@ Open `http://localhost:5173`. Vite proxies `/health` and `/api` to the API on po
 
 ## Reviewer Hub
 
-The primary prototype workflow is **Reviewer Hub**. It opens a server-memory queue of synthetic,
-already-extracted and already-compared applications in submission order. A reviewer selects an
-application, inspects its label image and comparison evidence, then approves or rejects it. An
-optional comment may accompany either decision. The active queue is single-reviewer and temporary:
-it resets when the API restarts. A decision removes an item and offers a ten-second undo action.
+The primary prototype workflow is **Reviewer Hub**. It opens a server-memory queue of synthetic or
+ad-hoc, already-extracted and already-compared applications in submission order. A reviewer selects
+an application, inspects its label image and comparison evidence, then approves or rejects it. An
+optional comment may accompany either decision. The active queue—including label images—is
+single-reviewer and temporary: it resets when the API restarts. A decision removes an item and
+offers a ten-second undo action.
 
 ## Ad-hoc application input
 
 The browser prototype supports one synthetic or public label image per ad-hoc review. Enter the
 expected application values (or select **Load synthetic example**), upload a JPEG or PNG, then
-review the OCR observations and deterministic comparison findings. This is a side feature for
-synthetic demonstrations or exceptional intake, rather than the operational reviewer workflow.
+review the OCR observations and deterministic comparison findings. A completed comparison is added
+automatically to the Reviewer Hub, and **Review this application now** opens that queue item
+directly. The upload UI does not ask for a label-panel classification; ad-hoc images use the neutral
+`unknown` metadata value. This is a side feature for synthetic demonstrations or exceptional intake,
+rather than the operational reviewer workflow.
 
 For local mock demonstrations, run the backend with `APP_ENVIRONMENT=test` and `OCR_PROVIDER=mock`,
 then set `VITE_ENABLE_OCR_MOCK_CONTROLS=true` before starting Vite. This exposes only deterministic

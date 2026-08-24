@@ -222,6 +222,18 @@ digest is provenance metadata, not an authentication mechanism.
 display and future same-field-of-vision checks without assuming that one image contains the complete
 container labeling.
 
+The ad-hoc upload interface does not ask the user to classify the panel. It supplies `unknown`
+because panel classification does not currently change OCR extraction or deterministic comparison.
+The field remains in the shared contract for preloaded data, evidence display, and future rules.
+
+### 4.7 `ReviewQueueCreateRequest`
+
+After OCR and comparison complete, the frontend sends the original `VerificationSubmission`, the
+resulting `VerificationResult`, and the same image to the review-queue endpoint. The request validates
+matching submission, record, and evidence-image identifiers. The backend stores the full application,
+verification result, and a processed image only in memory so the new item can be reviewed without
+rerunning OCR or comparison. Retrying the same active record is idempotent.
+
 ## 5. OCR boundary model
 
 ### 5.1 OCR relationship tree

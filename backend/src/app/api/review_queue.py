@@ -1,12 +1,15 @@
 from functools import lru_cache
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import Response
+from pydantic import ValidationError
 
+from app.extraction.image_processing import MAX_UPLOAD_BYTES, InvalidImageError, prepare_image
 from app.models.review_queue import (
     HumanReviewDecisionRequest,
     HumanReviewReceipt,
+    ReviewQueueCreateRequest,
     ReviewQueueItemDetail,
     ReviewQueueResponse,
 )
@@ -31,6 +34,46 @@ async def list_review_queue(
     return repository.list()
 
 
+@router.post("", response_model=ReviewQueueItemDetail, status_code=201)
+async def enqueue_review_queue_item(
+    payload_json: Annotated[str, Form(alias="payload")],
+    image: Annotated[UploadFile, File()],
+    repository: Annotated[ReviewQueueRepository, Depends(get_review_queue_repository)],
+) -> ReviewQueueItemDetail:
+    try:
+        payload = ReviewQueueCreateRequest.model_validate_json(payload_json)
+    except ValidationError as error:
+        raise HTTPException(
+            status_code=422, detail="The processed application is invalid."
+        ) from error
+
+    metadata = payload.submission.images[0]
+    data = await image.read(MAX_UPLOAD_BYTES + 1)
+    await image.close()
+    try:
+        prepared = prepare_image(
+            metadata,
+            upload_file_name=image.filename,
+            upload_media_type=image.content_type,
+            data=data,
+        )
+    except InvalidImageError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+
+    try:
+        return repository.enqueue(
+            application=payload.submission.application,
+            verification=payload.verification,
+            image=prepared,
+            panel_type=metadata.panel_type,
+        )
+    except QueueConflictError as error:
+        raise HTTPException(
+            status_code=409,
+            detail="This application has already completed human review.",
+        ) from error
+
+
 @router.get("/{queue_item_id}", response_model=ReviewQueueItemDetail)
 async def get_review_queue_item(
     queue_item_id: str,
@@ -49,9 +92,8 @@ async def get_review_queue_image(
     repository: Annotated[ReviewQueueRepository, Depends(get_review_queue_repository)],
 ) -> Response:
     try:
-        return Response(
-            content=repository.image_png(queue_item_id, image_id), media_type="image/png"
-        )
+        content, media_type = repository.image_content(queue_item_id, image_id)
+        return Response(content=content, media_type=media_type)
     except QueueNotFoundError as error:
         raise _not_found(error) from error
 

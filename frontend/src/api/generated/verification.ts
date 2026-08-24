@@ -198,6 +198,7 @@ export interface VerificationContract {
   humanReviewReceipt: HumanReviewReceipt;
   result: VerificationResult;
   reviewQueue: ReviewQueueResponse;
+  reviewQueueCreateRequest: ReviewQueueCreateRequest;
   reviewQueueItem: ReviewQueueItemDetail;
   submission: VerificationSubmission;
   submissionTransport: SubmissionTransport;
@@ -397,6 +398,10 @@ export interface ReviewQueueItemSummary {
   queuedAt: Queuedat;
   recordId: Recordid2;
   version: Version2;
+}
+export interface ReviewQueueCreateRequest {
+  submission: VerificationSubmission;
+  verification: VerificationResult;
 }
 export interface ReviewQueueItemDetail {
   application: ApplicationRecord;
