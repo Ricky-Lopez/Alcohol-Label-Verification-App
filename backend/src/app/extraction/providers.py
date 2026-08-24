@@ -35,16 +35,15 @@ Extract only these visible alcohol-label observations when present:
 - country_of_origin when an origin statement is visible
 - government_warning_text, including its heading and complete visible wording
 - government_warning_heading_case
-- government_warning_heading_weight
 Transcribe only text that is actually visible. Never infer, correct, complete, compare, paraphrase,
 or normalize missing or unclear wording. Omit absent observations instead of guessing.
 For a government health warning, preserve capitalization, spelling, punctuation, whitespace, and
 word order exactly as visible. Always set the government_warning_text normalized_value to null.
 Set warning_text_incomplete when any warning wording is cropped, obscured, ambiguous, or unreadable.
 For government_warning_heading_case, normalized_value may be uppercase or not_uppercase. For
-government_warning_heading_weight, normalized_value may be bold or not_bold. Use the exact visible
-heading as raw_text. If a visual property cannot be assessed, omit that observation or set its
-normalized_value to null and uncertain to true.
+that observation, use the exact visible heading as raw_text. If capitalization cannot be assessed,
+omit that observation or set its normalized_value to null and uncertain to true. Warning-heading
+weight is reserved for human visual review and must not be inferred by OCR.
 For every other observation, normalized_value must be null. Mark ambiguous observations uncertain.
 Do not make a compliance decision. Do not invent confidence scores, coordinates, or identifiers.
 If this is not an alcohol-label image, return no observations."""
@@ -66,7 +65,6 @@ class OcrObservationField(StrEnum):
     COUNTRY_OF_ORIGIN = "country_of_origin"
     GOVERNMENT_WARNING_TEXT = "government_warning_text"
     GOVERNMENT_WARNING_HEADING_CASE = "government_warning_heading_case"
-    GOVERNMENT_WARNING_HEADING_WEIGHT = "government_warning_heading_weight"
 
 
 class MockScenario(StrEnum):
@@ -94,7 +92,6 @@ class ProviderObservation(BaseModel):
                 "uppercase",
                 "not_uppercase",
             },
-            OcrObservationField.GOVERNMENT_WARNING_HEADING_WEIGHT: {"bold", "not_bold"},
         }
         if self.field not in allowed_values and self.normalized_value is not None:
             raise ValueError("textual OCR observations cannot be normalized by the extractor")
@@ -360,12 +357,6 @@ class MockOcrExtractor:
                 field=OcrObservationField.GOVERNMENT_WARNING_HEADING_CASE,
                 raw_text="GOVERNMENT WARNING:",
                 normalized_value="uppercase",
-                uncertain=selected == MockScenario.UNCERTAIN_LABEL,
-            ),
-            ProviderObservation(
-                field=OcrObservationField.GOVERNMENT_WARNING_HEADING_WEIGHT,
-                raw_text="GOVERNMENT WARNING:",
-                normalized_value="bold",
                 uncertain=selected == MockScenario.UNCERTAIN_LABEL,
             ),
         ]

@@ -138,13 +138,7 @@ def _candidate(
     segment = TextSegment(
         segment_id=f"queue-segment-{index}", image_id="queue-image", raw_text=text
     )
-    normalized = (
-        "uppercase"
-        if field == VerificationField.GOVERNMENT_WARNING_HEADING_CASE
-        else "bold"
-        if field == VerificationField.GOVERNMENT_WARNING_HEADING_WEIGHT
-        else None
-    )
+    normalized = "uppercase" if field == VerificationField.GOVERNMENT_WARNING_HEADING_CASE else None
     return segment, ExtractedFieldCandidate(
         field=field,
         raw_text=text,
@@ -178,7 +172,6 @@ def _verification(
         ),
         (VerificationField.GOVERNMENT_WARNING_TEXT, GOVERNMENT_WARNING_TEXT),
         (VerificationField.GOVERNMENT_WARNING_HEADING_CASE, "GOVERNMENT WARNING:"),
-        (VerificationField.GOVERNMENT_WARNING_HEADING_WEIGHT, "GOVERNMENT WARNING:"),
     ]
     issues: list[ExtractionIssue] = []
     if scenario == "text_mismatch":

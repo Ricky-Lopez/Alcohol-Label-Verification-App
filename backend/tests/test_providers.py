@@ -104,7 +104,6 @@ async def test_openai_adapter_uses_structured_stateless_image_request() -> None:
         "country_of_origin",
         "government_warning_text",
         "government_warning_heading_case",
-        "government_warning_heading_weight",
     ):
         assert field in OCR_INSTRUCTIONS
     assert "expectedLabel" not in str(responses.arguments)
@@ -121,7 +120,6 @@ async def test_openai_adapter_uses_structured_stateless_image_request() -> None:
         "country_of_origin",
         "government_warning_text",
         "government_warning_heading_case",
-        "government_warning_heading_weight",
     }
 
 
@@ -140,8 +138,8 @@ def test_provider_observations_allow_missing_uncertain_and_duplicate_fields() ->
             uncertain=True,
         ),
         ProviderObservation(
-            field=OcrObservationField.GOVERNMENT_WARNING_HEADING_WEIGHT,
-            raw_text="GOVERNMENT WARNING:",
+            field=OcrObservationField.GOVERNMENT_WARNING_HEADING_CASE,
+            raw_text="Government Warning:",
             normalized_value=None,
             uncertain=True,
         ),

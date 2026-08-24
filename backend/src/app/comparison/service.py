@@ -12,7 +12,12 @@ from uuid import uuid4
 
 import pycountry
 
-from app.models.extraction import ExtractedFieldCandidate, ExtractionIssueCode, VerificationField
+from app.models.extraction import (
+    ExtractedFieldCandidate,
+    ExtractionIssueCode,
+    ExtractionStatus,
+    VerificationField,
+)
 from app.models.label import AlcoholContent, NetContents, ResponsibleParty
 from app.models.verification import (
     ComparisonInput,
@@ -153,7 +158,7 @@ class ComparisonService:
             self.candidates[candidate.field].append(candidate)
         self.segments = {segment.segment_id: segment for segment in comparison.extraction.segments}
         self.field_issues: dict[VerificationField, set[ExtractionIssueCode]] = defaultdict(set)
-        self.global_incomplete = False
+        self.global_incomplete = comparison.extraction.status == ExtractionStatus.FAILED
         for issue in comparison.extraction.issues:
             if issue.field is not None:
                 self.field_issues[issue.field].add(issue.code)
@@ -556,8 +561,7 @@ class ComparisonService:
     def _warning(self) -> list[VerificationFinding]:
         text = self._warning_text()
         heading_case = self._heading_case()
-        heading_weight = self._heading_weight()
-        return [text, heading_case, heading_weight]
+        return [text, heading_case]
 
     def _warning_text(self) -> VerificationFinding:
         field = VerificationField.GOVERNMENT_WARNING_TEXT
@@ -635,46 +639,6 @@ class ComparisonService:
             VerificationOutcome.MISMATCH,
             "government-warning-heading-case-v1",
             "The warning heading is not uppercase.",
-            expected,
-            candidates,
-        )
-
-    def _heading_weight(self) -> VerificationFinding:
-        field = VerificationField.GOVERNMENT_WARNING_HEADING_WEIGHT
-        candidates = self.candidates[field]
-        expected = ComparisonValue(display_value="GOVERNMENT WARNING:", normalized_value="bold")
-        if not candidates or self.global_incomplete or self.field_issues[field]:
-            return self._finding(
-                field,
-                VerificationOutcome.UNABLE_TO_EVALUATE,
-                "government-warning-heading-weight-v1",
-                "Boldness cannot be determined reliably from the available evidence.",
-                expected,
-                candidates,
-            )
-        if len({candidate.normalized_value for candidate in candidates}) > 1:
-            return self._finding(
-                field,
-                VerificationOutcome.UNABLE_TO_EVALUATE,
-                "government-warning-heading-weight-v1",
-                "Heading-weight evidence conflicts and requires review.",
-                expected,
-                candidates,
-            )
-        if candidates[0].normalized_value == "bold":
-            return self._finding(
-                field,
-                VerificationOutcome.MATCH,
-                "government-warning-heading-weight-v1",
-                "The warning heading is visually identified as bold.",
-                expected,
-                candidates,
-            )
-        return self._finding(
-            field,
-            VerificationOutcome.MISMATCH,
-            "government-warning-heading-weight-v1",
-            "The warning heading is visually identified as not bold.",
             expected,
             candidates,
         )
