@@ -58,14 +58,14 @@ def write_png(path: Path) -> None:
     path.write_bytes(output.getvalue())
 
 
-def test_default_provider_timeout_is_thirty_seconds(
+def test_default_provider_timeout_is_five_minutes_for_optimization(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.delenv("OPENAI_OCR_TIMEOUT_SECONDS", raising=False)
 
     settings = Settings(_env_file=None)
 
-    assert settings.openai_ocr_timeout_seconds == 30
+    assert settings.openai_ocr_timeout_seconds == 300
 
 
 @pytest.mark.parametrize(
