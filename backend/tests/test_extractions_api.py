@@ -153,7 +153,6 @@ async def test_success_mock_extracts_every_agreed_label_observation() -> None:
         "country_of_origin",
         "government_warning_text",
         "government_warning_heading_case",
-        "government_warning_heading_weight",
     }
     segment_ids = {segment["segmentId"] for segment in body["segments"]}
     assert all(

@@ -45,7 +45,8 @@ The core prototype covers the three checks repeatedly identified in the intervie
 
 1. Brand-name comparison with transparent normalization and human judgment.
 2. Alcohol-content comparison, including explicit beverage-specific applicability.
-3. Government-warning verification for exact wording, uppercase heading, and bold-heading evidence.
+3. Government-warning verification for exact wording and an uppercase heading. Heading boldness is
+   left to the human reviewer because the prototype OCR cannot assess font weight reliably.
 
 The prototype may extract and display other label fields, but full regulatory validation of every
 field, beverage variation, type-size rule, or placement rule is not part of the time-constrained
@@ -176,9 +177,8 @@ documents is a separate capability and must not be silently assumed.
   Line wrapping and runs of whitespace may be normalized for comparison; capitalization, spelling,
   punctuation, word presence, and word order must remain exact.
 - **FR-017:** The application must separately evaluate whether the `GOVERNMENT WARNING:` heading
-  is uppercase and whether visual evidence indicates that it is bold. If visual styling cannot be
-  determined reliably, the result must be `unable to evaluate`; text recognition alone must not
-  claim that boldness passed.
+  is uppercase. Heading boldness must remain part of the human visual review and must not be
+  requested from OCR or reported as an automated match or mismatch.
 - **FR-018:** The application must not claim to verify font size, prominence, placement, or every
   applicable regulation unless each property has an approved, testable rule and sufficient image
   evidence.
@@ -271,7 +271,8 @@ documents is a separate capability and must not be silently assumed.
   wherever possible.
 - **QA-002:** Automated tests must cover exact matches, capitalization differences, punctuation
   differences, true mismatches, missing fields, unreadable text, beverage-specific exceptions,
-  warning-text deviations, warning-heading case, and indeterminate boldness.
+  warning-text deviations and warning-heading case. Reviewer-workflow tests must keep heading
+  boldness available for human visual inspection without producing an automated finding.
 - **QA-003:** Upload tests must cover each supported format plus malformed, mislabeled, empty,
   oversized, and unsupported files.
 - **QA-004:** End-to-end tests must cover the successful primary workflow and representative
@@ -431,7 +432,7 @@ assessment and, at minimum:
 | AC-03 | Brand differs in potentially meaningful punctuation or wording | The field is marked `possible match` or `review needed`, with both values and evidence visible. |
 | AC-04 | Warning wording has one changed, missing, added, or reordered word | Warning text is marked as a mismatch and the difference is identifiable. |
 | AC-05 | Warning heading is title case | Heading-case check is marked as a mismatch even if the warning body is otherwise exact. |
-| AC-06 | OCR finds the warning text but visual analysis cannot establish boldness | Text and boldness are reported separately; boldness is `unable to evaluate` and requires review. |
+| AC-06 | OCR finds the warning text but cannot establish heading boldness | Warning text and heading capitalization are evaluated; boldness remains a human visual-review responsibility and does not make the automated analysis incomplete. |
 | AC-07 | Label is blurry or affected by glare | The system does not invent values; uncertain fields are referred to manual review and the user receives useful recapture guidance. |
 | AC-08 | A required application value or valid image is absent | Analysis does not start, and the relevant input has an actionable validation message. |
 | AC-09 | The analysis dependency is blocked by the network or times out | The interface stops waiting within the bounded timeout, preserves any safe partial results, and offers a retry or documented fallback. |
@@ -463,8 +464,8 @@ These gaps must be resolved before their related checks can be called complete:
    file-to-application-data mapping format is preferred?
 9. What accuracy thresholds are acceptable for each field, and what maximum false-match rate is
    tolerable?
-10. Is detecting bold warning text required for prototype acceptance, or is an explicit manual
-    review state acceptable when styling cannot be determined?
+10. Resolved for the prototype: bold warning text is inspected by the human reviewer and is not an
+    OCR or deterministic-comparison finding.
 11. In a future operational workflow, will expected values arrive through a structured export,
     internal API, uploaded manifest, or pre-parsed queue? Who owns and validates that upstream
     parsing?
@@ -490,7 +491,7 @@ assumptions, and route uncertain cases to human review.
 | Production would involve PII, retention, and federal controls | SEC-001–SEC-008, future production requirements |
 | Label matching requires nuance and agent judgment | G-03, FR-011–FR-013, FR-019, FR-021–FR-028 |
 | Government warning wording must be exact | FR-016, QA-002, AC-04 |
-| Warning heading must be uppercase and bold | FR-017, AC-05–AC-06, open decision 10 |
+| Warning heading must be uppercase and bold | FR-017, AC-05–AC-06; capitalization is automated and boldness is reviewed visually |
 | Warning text may be made too small or buried in the design | FR-018, P1-003, P1-009 |
 | Agents currently rely on a familiar printed checklist | UX-001–UX-003, P1-002 |
 | Label images may have skew, glare, poor lighting, or low readability | FR-019, ST-001–ST-004, AC-07 |

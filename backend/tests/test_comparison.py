@@ -74,11 +74,7 @@ def candidate(
         field=field,
         raw_text=text,
         normalized_value=(
-            "uppercase"
-            if field == VerificationField.GOVERNMENT_WARNING_HEADING_CASE
-            else "bold"
-            if field == VerificationField.GOVERNMENT_WARNING_HEADING_WEIGHT
-            else None
+            "uppercase" if field == VerificationField.GOVERNMENT_WARNING_HEADING_CASE else None
         ),
         evidence_segment_ids=[segment.segment_id],
     )
@@ -136,7 +132,6 @@ def all_entries() -> list[tuple[VerificationField, str]]:
         (VerificationField.RESPONSIBLE_PARTY_ADDRESS, "Frankfort, KY, USA"),
         (VerificationField.GOVERNMENT_WARNING_TEXT, GOVERNMENT_WARNING_TEXT),
         (VerificationField.GOVERNMENT_WARNING_HEADING_CASE, "GOVERNMENT WARNING:"),
-        (VerificationField.GOVERNMENT_WARNING_HEADING_WEIGHT, "GOVERNMENT WARNING:"),
     ]
 
 
@@ -149,6 +144,10 @@ def test_clear_label_matches_all_applicable_requirements() -> None:
     assert (
         finding(result, VerificationField.COUNTRY_OF_ORIGIN).outcome
         == VerificationOutcome.NOT_APPLICABLE
+    )
+    assert all(
+        item.field != VerificationField.GOVERNMENT_WARNING_HEADING_WEIGHT
+        for item in result.findings
     )
 
 

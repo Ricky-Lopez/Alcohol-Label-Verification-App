@@ -47,19 +47,38 @@ export const ReviewerHub = ({ onHome, initialQueueItemId = null }: { onHome: () 
     if (outcome.kind === 'completed') { setQueue(outcome.value); setError(null); return outcome.value }
     setError(outcome.message); return null
   }, [])
-  useEffect(() => { void refresh() }, [refresh])
   useEffect(() => {
-    if (!initialQueueItemId) return
     let active = true
-    setBusy(true)
-    void getReviewQueueItem(initialQueueItemId).then((outcome) => {
+    const load = async () => {
+      const currentQueue = await refresh()
+      if (!active || !initialQueueItemId || !currentQueue) return
+      if (!currentQueue.items.some((item) => item.queueItemId === initialQueueItemId)) {
+        setDetail(null)
+        setError(null)
+        setNotice('The previously selected application is no longer available. Showing the current queue.')
+        return
+      }
+      setBusy(true)
+      const outcome = await getReviewQueueItem(initialQueueItemId)
       if (!active) return
       setBusy(false)
-      if (outcome.kind === 'completed') { setDetail(outcome.value); setComment(''); setError(null) }
-      else setError(outcome.message)
-    })
+      if (outcome.kind === 'completed') {
+        setDetail(outcome.value)
+        setComment('')
+        setError(null)
+      } else if (outcome.kind === 'not-found') {
+        await refresh()
+        if (!active) return
+        setDetail(null)
+        setError(null)
+        setNotice('The previously selected application is no longer available. Showing the current queue.')
+      } else {
+        setError(outcome.message)
+      }
+    }
+    void load()
     return () => { active = false }
-  }, [initialQueueItemId])
+  }, [initialQueueItemId, refresh])
   useEffect(() => { if (detail) detailHeading.current?.focus() }, [detail])
 
   const filtered = (queue?.items ?? []).filter((item) => (filter === 'all' || item.overallStatus === filter || (filter === 'review_needed' && item.overallStatus === 'analysis_incomplete')) && `${item.brandName} ${item.recordId}`.toLowerCase().includes(search.trim().toLowerCase()))
@@ -67,7 +86,18 @@ export const ReviewerHub = ({ onHome, initialQueueItemId = null }: { onHome: () 
     setBusy(true)
     const outcome = await getReviewQueueItem(item.queueItemId)
     setBusy(false)
-    if (outcome.kind === 'completed') { setDetail(outcome.value); setComment(''); setError(null) } else setError(outcome.message)
+    if (outcome.kind === 'completed') {
+      setDetail(outcome.value)
+      setComment('')
+      setError(null)
+    } else if (outcome.kind === 'not-found') {
+      await refresh()
+      setDetail(null)
+      setError(null)
+      setNotice('That application is no longer available. The queue has been refreshed.')
+    } else {
+      setError(outcome.message)
+    }
   }
   const move = async (direction: -1 | 1) => {
     if (!detail) return
