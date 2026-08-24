@@ -3,7 +3,11 @@
 from app.models.contract import VerificationContract
 from app.models.extraction import OcrExtractionResult
 from app.models.label import ApplicationRecord, VerificationSubmission
-from app.models.review_queue import ReviewQueueItemDetail, ReviewQueueResponse
+from app.models.review_queue import (
+    ReviewQueueCreateRequest,
+    ReviewQueueItemDetail,
+    ReviewQueueResponse,
+)
 from app.models.verification import ComparisonInput, ComparisonRequest, VerificationResult
 
 __all__ = [
@@ -12,6 +16,7 @@ __all__ = [
     "ComparisonRequest",
     "OcrExtractionResult",
     "ReviewQueueItemDetail",
+    "ReviewQueueCreateRequest",
     "ReviewQueueResponse",
     "VerificationContract",
     "VerificationResult",

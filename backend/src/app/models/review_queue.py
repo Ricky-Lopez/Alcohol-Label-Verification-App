@@ -2,10 +2,10 @@ from datetime import datetime
 from enum import StrEnum
 from typing import Annotated
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 
 from app.models.base import ContractModel, Identifier, LabelText, ShortText
-from app.models.label import ApplicationRecord, LabelPanelType
+from app.models.label import ApplicationRecord, LabelPanelType, VerificationSubmission
 from app.models.verification import OverallReviewStatus, VerificationResult
 
 
@@ -44,6 +44,29 @@ class ReviewQueueResponse(ContractModel):
     items: list[ReviewQueueItemSummary]
     total_count: Annotated[int, Field(ge=0)]
     session_scoped: bool = True
+
+
+class ReviewQueueCreateRequest(ContractModel):
+    submission: VerificationSubmission
+    verification: VerificationResult
+
+    @model_validator(mode="after")
+    def validate_processed_application(self) -> "ReviewQueueCreateRequest":
+        if len(self.submission.images) != 1:
+            raise ValueError("the prototype review queue accepts exactly one image")
+        if self.verification.submission_id != self.submission.submission_id:
+            raise ValueError("verification submissionId must match the submitted application")
+        if self.verification.record_id != self.submission.application.record_id:
+            raise ValueError("verification recordId must match the submitted application")
+        image_ids = {image.client_image_id for image in self.submission.images}
+        evidence_image_ids = {
+            evidence.image_id
+            for finding in self.verification.findings
+            for evidence in finding.evidence
+        }
+        if not evidence_image_ids.issubset(image_ids):
+            raise ValueError("verification evidence references an unknown submitted image")
+        return self
 
 
 class HumanReviewDecisionRequest(ContractModel):

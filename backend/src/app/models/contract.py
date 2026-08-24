@@ -4,6 +4,7 @@ from app.models.label import SubmissionTransport, VerificationSubmission
 from app.models.review_queue import (
     HumanReviewDecisionRequest,
     HumanReviewReceipt,
+    ReviewQueueCreateRequest,
     ReviewQueueItemDetail,
     ReviewQueueResponse,
 )
@@ -20,6 +21,7 @@ class VerificationContract(ContractModel):
     comparison_request: ComparisonRequest
     result: VerificationResult
     review_queue: ReviewQueueResponse
+    review_queue_create_request: ReviewQueueCreateRequest
     review_queue_item: ReviewQueueItemDetail
     human_review_decision_request: HumanReviewDecisionRequest
     human_review_receipt: HumanReviewReceipt

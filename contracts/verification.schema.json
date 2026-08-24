@@ -1019,6 +1019,23 @@
       "title": "ResponsibleParty",
       "type": "object"
     },
+    "ReviewQueueCreateRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "submission": {
+          "$ref": "#/$defs/VerificationSubmission"
+        },
+        "verification": {
+          "$ref": "#/$defs/VerificationResult"
+        }
+      },
+      "required": [
+        "submission",
+        "verification"
+      ],
+      "title": "ReviewQueueCreateRequest",
+      "type": "object"
+    },
     "ReviewQueueImage": {
       "additionalProperties": false,
       "properties": {
@@ -1584,6 +1601,9 @@
     "reviewQueue": {
       "$ref": "#/$defs/ReviewQueueResponse"
     },
+    "reviewQueueCreateRequest": {
+      "$ref": "#/$defs/ReviewQueueCreateRequest"
+    },
     "reviewQueueItem": {
       "$ref": "#/$defs/ReviewQueueItemDetail"
     },
@@ -1602,6 +1622,7 @@
     "comparisonRequest",
     "result",
     "reviewQueue",
+    "reviewQueueCreateRequest",
     "reviewQueueItem",
     "humanReviewDecisionRequest",
     "humanReviewReceipt"

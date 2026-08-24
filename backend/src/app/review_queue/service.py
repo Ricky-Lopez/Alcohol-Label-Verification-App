@@ -10,6 +10,7 @@ from threading import RLock
 from uuid import uuid4
 
 from app.comparison import compare
+from app.extraction.image_processing import PreparedImage
 from app.models.extraction import (
     ExtractedFieldCandidate,
     ExtractionIssue,
@@ -28,6 +29,7 @@ from app.models.label import (
     ImageMediaType,
     IntakeSource,
     LabelImageInput,
+    LabelPanelType,
     NetContents,
     NetContentsUnit,
     PostalAddress,
@@ -69,12 +71,16 @@ class QueueRecord:
     application: ApplicationRecord
     verification: VerificationResult
     queued_at: datetime
-    image_file_name: str
+    image_file_name: str | None = None
+    image_data: bytes | None = None
+    image_media_type: str = ImageMediaType.PNG.value
+    source_image_id: str | None = None
+    panel_type: LabelPanelType = LabelPanelType.BRAND
     version: int = 1
 
     @property
     def image_id(self) -> str:
-        return f"queue-image-{self.position}"
+        return self.source_image_id or f"queue-image-{self.position}"
 
 
 @dataclass(frozen=True, slots=True)
@@ -276,6 +282,9 @@ class ReviewQueueRepository:
         self._clock, self._lock = clock, RLock()
         self._active = {record.queue_item_id: record for record in (records or seed_queue(clock))}
         self._completed: dict[str, CompletedDecision] = {}
+        self._next_position = (
+            max((record.position for record in self._active.values()), default=0) + 1
+        )
 
     def _ordered(self) -> list[QueueRecord]:
         return sorted(self._active.values(), key=lambda item: item.position)
@@ -308,8 +317,8 @@ class ReviewQueueRepository:
                 raise QueueNotFoundError(queue_item_id)
             image = ReviewQueueImage(
                 image_id=record.image_id,
-                panel_type="brand",
-                alt_text=f"Synthetic label for {record.application.expected_label.brand_name}",
+                panel_type=record.panel_type,
+                alt_text=f"Submitted label for {record.application.expected_label.brand_name}",
                 image_url=f"/api/review-queue/{record.queue_item_id}/images/{record.image_id}",
             )
             return ReviewQueueItemDetail(
@@ -319,11 +328,58 @@ class ReviewQueueRepository:
                 images=[image],
             )
 
-    def image_png(self, queue_item_id: str, image_id: str) -> bytes:
-        record = self._active.get(queue_item_id)
-        if record is None or image_id != record.image_id:
-            raise QueueNotFoundError(queue_item_id)
-        return (QUEUE_IMAGE_DIRECTORY / record.image_file_name).read_bytes()
+    def image_content(self, queue_item_id: str, image_id: str) -> tuple[bytes, str]:
+        with self._lock:
+            record = self._active.get(queue_item_id)
+            if record is None or image_id != record.image_id:
+                raise QueueNotFoundError(queue_item_id)
+            if record.image_data is not None:
+                return record.image_data, record.image_media_type
+            if record.image_file_name is None:
+                raise QueueNotFoundError(queue_item_id)
+            return (
+                QUEUE_IMAGE_DIRECTORY / record.image_file_name
+            ).read_bytes(), record.image_media_type
+
+    def enqueue(
+        self,
+        *,
+        application: ApplicationRecord,
+        verification: VerificationResult,
+        image: PreparedImage,
+        panel_type: LabelPanelType,
+    ) -> ReviewQueueItemDetail:
+        with self._lock:
+            existing = next(
+                (
+                    record
+                    for record in self._active.values()
+                    if record.application.record_id == application.record_id
+                ),
+                None,
+            )
+            if existing is not None:
+                return self.detail(existing.queue_item_id)
+            if any(
+                completed.record.application.record_id == application.record_id
+                for completed in self._completed.values()
+            ):
+                raise QueueConflictError(application.record_id)
+
+            record = QueueRecord(
+                queue_item_id=f"queue-item-{uuid4()}",
+                position=self._next_position,
+                application=application,
+                verification=verification,
+                queued_at=self._clock(),
+                image_data=image.data,
+                image_media_type=image.media_type,
+                source_image_id=image.client_image_id,
+                panel_type=panel_type,
+            )
+            self._next_position += 1
+            self._active[record.queue_item_id] = record
+            return self.detail(record.queue_item_id)
 
     def decide(
         self, queue_item_id: str, decision: HumanReviewDecision, comment: str | None
